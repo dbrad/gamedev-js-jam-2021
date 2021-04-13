@@ -1,0 +1,29 @@
+name: Push to itch.io
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+  workflow_dispatch:
+
+jobs:
+  deploy_to_itch:
+    runs-on: windows-latest
+    env:
+      NODE_ENV: production
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Environment
+        run: yarn install
+        
+      - name: Build and Zip the Game
+        run: yarn build-and-zip
+
+      - name: Butler Push
+        run: .\\tools\\butler push dist\\game.zip fanlix/gamedev-js-jam-2021:html5 --userversion-file VERSION
+        env: 
+          BUTLER_API_KEY: ${{ secrets.BUTLER_CREDENTIALS }}
