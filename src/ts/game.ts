@@ -1,9 +1,10 @@
 import { CurrentScene, getSceneRootId } from "./scene";
 import { gl_clear, gl_flush, gl_getContext, gl_init, gl_setClear } from "./gl"
-import { mainMenuScene, setupMainMenuScene } from "./scenes/main-menu";
+import { mainMenuScene, mainMenuTransitionIn, setupMainMenuScene } from "./scenes/main-menu";
 import { moveNode, node_movement, renderNode } from "./node";
 import { screenHeight, screenWidth } from "./screen";
 
+import { initInput } from "./input";
 import { interpolate } from "./interpolate";
 import { loadAsset } from "./asset";
 import { v2 } from "./v2";
@@ -18,6 +19,7 @@ window.addEventListener(`load`, async () =>
   canvas.height = screenHeight;
   let context = gl_getContext(canvas);
   gl_init(context);
+  initInput();
 
   setupMainMenuScene();
 
@@ -49,6 +51,7 @@ window.addEventListener(`load`, async () =>
   };
 
   await loadAsset("sheet");
+  await mainMenuTransitionIn();
   gl_setClear(50, 25, 75);
   then = window.performance.now();
   window.requestAnimationFrame(loop);

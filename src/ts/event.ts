@@ -1,5 +1,5 @@
 type EventHanlder = (...args: any[]) => void;
-type ValidEvent = "test";
+type ValidEvent = "key_pressed";
 const allEvents: Map<ValidEvent, Set<EventHanlder>> = new Map();
 export function subscribe(eventName: ValidEvent, handler: EventHanlder): void
 {

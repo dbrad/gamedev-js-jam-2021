@@ -84,7 +84,7 @@ export function moveNode(nodeId: number, pos: v2, ease: Easing = Easing.None, du
   }
   if (ease !== Easing.None && !node_movement.has(nodeId) && duration > 0)
   {
-    return new Promise((resolve, _) =>
+    return new Promise((resolve) =>
     {
       node_movement.set(nodeId, createInterpolationData(duration, node_position[nodeId], pos, ease, resolve));
     });
