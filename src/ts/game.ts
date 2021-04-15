@@ -1,4 +1,5 @@
 import { CurrentScene, getSceneRootId } from "./scene";
+import { campScene, setupCampScene } from "./scenes/camp";
 import { gl_clear, gl_flush, gl_getContext, gl_init, gl_setClear } from "./gl"
 import { mainMenuScene, mainMenuTransitionIn, setupMainMenuScene } from "./scenes/main-menu";
 import { moveNode, node_movement, renderNode } from "./node";
@@ -7,6 +8,7 @@ import { screenHeight, screenWidth } from "./screen";
 import { initInput } from "./input";
 import { interpolate } from "./interpolate";
 import { loadAsset } from "./asset";
+import { showDialog } from "./dialog";
 import { v2 } from "./v2";
 
 window.addEventListener(`load`, async () =>
@@ -22,6 +24,7 @@ window.addEventListener(`load`, async () =>
   initInput();
 
   setupMainMenuScene();
+  setupCampScene();
 
   let then: number;
   let delta: number;
@@ -43,16 +46,19 @@ window.addEventListener(`load`, async () =>
       }
     }
     currentSceneRootId = getSceneRootId(CurrentScene);
-    mainMenuScene(now, delta);
+    // mainMenuScene(now, delta);
+    campScene();
     renderNode(currentSceneRootId, now, delta);
+    // showDialog("Hello little reflection... Still have your wits about you, eh?", 3000, now, "The Smith");
+
 
     gl_flush();
     window.requestAnimationFrame(loop);
   };
 
   await loadAsset("sheet");
-  await mainMenuTransitionIn();
-  gl_setClear(50, 25, 75);
+  // await mainMenuTransitionIn();
+  gl_setClear(0, 0, 0);
   then = window.performance.now();
   window.requestAnimationFrame(loop);
 });

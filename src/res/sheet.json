@@ -88,6 +88,46 @@
       "y": 8,
       "w": 8,
       "h": 8
+    },
+    {
+      "type": "row",
+      "name": [
+        "player_right_01",
+        "player_right_02",
+        "player_left_01",
+        "player_left_02",
+        "player_up_01",
+        "player_up_02",
+        "player_down_01",
+        "player_down_02",
+        "smith_01",
+        "smith_02",
+        "smith_03",
+        "smith_04",
+        "fire_01",
+        "fire_02",
+        "fire_03",
+        "moon"
+      ],
+      "x": 0,
+      "y": 16,
+      "w": 16,
+      "h": 16
+    },
+    {
+      "type": "row",
+      "name": [
+        "wall_01",
+        "wall_02",
+        "wall_03",
+        "grass_01",
+        "grass_02",
+        "grass_03"
+      ],
+      "x": 0,
+      "y": 32,
+      "w": 16,
+      "h": 16
     }
   ]
 }

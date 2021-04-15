@@ -1,4 +1,4 @@
-import { addChildNode, createNode, createSprite, createTextNode, moveNode, node_movement, node_position, node_size, node_visible } from "../node";
+import { addChildNode, createNode, createTextNode, moveNode, node_movement, node_position, node_size, node_visible } from "../node";
 import { buttonHover, zzfxP } from "../zzfx";
 import { screenCenterX, screenHeight, screenWidth } from "../screen";
 import { subscribe, unsubscribe } from "../event";
@@ -9,7 +9,6 @@ import { Key } from "../input";
 
 export let mainMenuRootId = -1;
 let mainMenuTitleTextId = -1;
-let titleState = 0;
 
 const options: number[] = []
 
@@ -86,20 +85,6 @@ export function mainMenuTransitionOut(): Promise<void>
 }
 export function mainMenuScene(now: number, delta: number): void
 {
-  // if (!node_movement.has(mainMenuTitleTextId))
-  // {
-  //   if (titleState === 0)
-  //   {
-  //     moveNode(mainMenuTitleTextId, [screenCenterX, 60], Easing.Linear, 1000);
-  //     titleState = 1;
-  //   }
-  //   else
-  //   {
-  //     moveNode(mainMenuTitleTextId, [screenCenterX, 50], Easing.Linear, 1000);
-  //     titleState = 0;
-  //   }
-  // }
-
   const selectedNodeId = options[selectedIndex];
   if (!node_movement.has(selectedNodeId))
   {
@@ -115,6 +100,4 @@ export function mainMenuScene(now: number, delta: number): void
       arrowState = 0;
     }
   }
-
-
 }
