@@ -117,9 +117,6 @@
     {
       "type": "row",
       "name": [
-        "wall_01",
-        "wall_02",
-        "wall_03",
         "grass_01",
         "grass_02",
         "grass_03"
