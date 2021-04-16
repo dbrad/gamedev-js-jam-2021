@@ -1,78 +1,92 @@
-import { rand } from "../random";
+import { rand, shuffle } from "../random";
 
-export function generateLevel(difficulty: number)
+export function generateLevel( difficulty: number )
 {
-  const numberOfRooms = Math.floor(rand(0, 2) + 5 + difficulty * 2.6);
-  let roomCount = 0;
-
+  const numberOfRooms = Math.floor( rand( 0, 2 ) + 5 + difficulty * 2.6 );
   const map: number[] = [];
-  const roomQueue: number[] = [];
   const deadEnds: number[] = [];
-  roomQueue.push(35);
-  do
+
+  const neighbourIsValid: ( neighbour: number ) => boolean = ( neighbour: number ) =>
   {
-    let room = roomQueue.shift();
-    if (room)
+
+    // check for edges
+    if ( neighbour <= 0 || neighbour > 79 || neighbour % 10 === 0 ) return false;
+
+    // check if already a room
+    if ( map[ neighbour ] && map[ neighbour ] > 0 ) return false;
+
+    if ( roomCount >= numberOfRooms ) return false;
+
+    let numberOfNeighbours = 0;
+    for ( const nDir of [ -1, -10, 1, 10 ] )
     {
-      let roomAdded = false;
+      // check for edges
+      const neighbourNeighbour = neighbour + nDir;
 
-      for (const dir of [-1, -10, 1, 10])
+      // check if already a room
+      if ( map[ neighbourNeighbour ] && map[ neighbourNeighbour ] > 0 )
       {
-        if (roomCount >= numberOfRooms)
-        {
-          roomQueue.length = 0;
-          break;
-        }
-        const neighbour = room + dir;
-
-        // check for edges
-        if (neighbour < 0 || neighbour > 79 || neighbour % 10 === 0) continue;
-
-        // check if already a room
-        if (map[neighbour] && map[neighbour] > 0) continue;
-
-        let numberOfNeighbours = 0;
-        for (const nDir of [-1, -10, 1, 10])
-        {
-          // check for edges
-          const neighbourNeighbour = neighbour + nDir;
-          if (neighbourNeighbour < 0 || neighbourNeighbour > 79 || neighbourNeighbour % 10 === 0) continue;
-
-          // check if already a room
-          if (map[neighbourNeighbour] && map[neighbourNeighbour] > 0)
-          {
-            numberOfNeighbours++;
-            if (numberOfNeighbours > 1)
-              break;
-          }
-        }
-        if (numberOfNeighbours > 1) continue;
-
-        if (rand(0, 100) < 50) continue;
-
-        map[neighbour] = 1;
-        roomQueue.push(neighbour);
-        roomAdded = true;
-        roomCount++;
-      }
-      if (!roomAdded)
-      {
-        deadEnds.push(room);
+        numberOfNeighbours++;
+        if ( numberOfNeighbours > 1 ) break;
       }
     }
-    if (roomQueue.length === 0 && roomCount < numberOfRooms)
-    {
-      roomQueue.push(35);
-    }
-  } while (roomQueue.length > 0)
+    if ( numberOfNeighbours > 1 ) return false;
+    return true;
+  };
 
-  for (let y = 1; y < 8; y++)
+  let roomCount = 0;
+  while ( roomCount < numberOfRooms )
+  {
+    roomCount = 0;
+    map.length = 0
+    deadEnds.length = 0
+    const roomQueue: number[] = [];
+    map[ 35 ] = 1;
+    roomQueue.push( 35 );
+    do
+    {
+      let room = roomQueue.shift();
+      if ( room )
+      {
+        let roomAdded = false;
+        const dirs = shuffle( [ 10, -1, 1, -10 ] );
+        for ( const dir of dirs )
+        {
+          const neighbour = room + dir;
+          if ( !neighbourIsValid( neighbour ) ) continue;
+          if ( rand( 0, 100 ) < 50 ) continue;
+
+          map[ neighbour ] = 1;
+          roomQueue.push( neighbour );
+          roomAdded = true;
+          roomCount++;
+        }
+        if ( !roomAdded )
+        {
+          deadEnds.push( room );
+        }
+      }
+    } while ( roomQueue.length > 0 );
+  }
+
+  console.log( "=-=-=-=-=-=-=-=-=" );
+  for ( let y = 0; y < 8; y++ )
   {
     let str = "";
-    for (let x = 1; x < 10; x++)
+    for ( let x = 1; x < 10; x++ )
     {
-      str += map[y * 10 + x] ? "+" : " ";
+      const index = y * 10 + x;
+      if ( deadEnds.indexOf( index ) > -1 )
+      {
+        str += " # ";
+      }
+      else
+      {
+        str += map[ y * 10 + x ] ? " + " : "   ";
+
+      }
     }
-    console.log(str);
+    console.log( str );
   }
+  console.log( "=-=-=-=-=-=-=-=-=" );
 }

@@ -51,7 +51,7 @@ export function mainMenuScene(now: number, delta: number): void
 {
   if (inputContext.fire === startGameTextId)
   {
-    generateLevel(5);
+    generateLevel(10);
     //setScene(Scenes.Camp);
   }
 }
