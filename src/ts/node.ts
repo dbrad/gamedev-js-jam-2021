@@ -1,7 +1,10 @@
 import { Align, parseText, pushQuad, pushSprite, pushSpriteAndSave, pushText, textHeight, textWidth } from "./draw";
 import { Easing, InterpolationData, createInterpolationData } from "./interpolate";
+import { buttonHover, zzfxP } from "./zzfx";
+import { cursor, inputContext, mouseDown } from "./input";
 import { gl_restore, gl_save, gl_translate } from "./gl";
 
+import { TEXTURE_CACHE } from "./texture";
 import { assert } from "./debug";
 import { v2 } from "./v2";
 
@@ -9,7 +12,9 @@ export const enum TAG
 {
   NONE,
   TEXT,
-  SPRITE
+  SPRITE,
+  WINDOW,
+  BUTTON
 }
 
 //#region Base Node Data
@@ -101,6 +106,46 @@ export function nodeSize(nodeId: number): v2
   return [size[0] * scale, size[1] * scale];
 }
 
+export function nodeInput(nodeId: number, cursorPosition: number[] = cursor): void
+{
+  const position = node_position[nodeId];
+  const size = nodeSize(nodeId);
+  const relativePosition = [cursorPosition[0] - position[0], cursorPosition[1] - position[1]];
+
+  if (cursorPosition[0] >= position[0]
+    && cursorPosition[1] >= position[1]
+    && cursorPosition[0] < position[0] + size[0]
+    && cursorPosition[1] < position[1] + size[1])
+  {
+    inputContext.hot = nodeId;
+    if (inputContext.active === nodeId)
+    {
+      if (!mouseDown)
+      {
+        if (inputContext.hot === nodeId)
+        {
+          inputContext.fire = nodeId;
+        }
+        inputContext.active = -1;
+      }
+    }
+    else if (inputContext.hot === nodeId)
+    {
+
+      if (mouseDown)
+      {
+        inputContext.active = nodeId;
+      }
+    }
+
+    const children = node_children[nodeId]
+    for (const childId of children)
+    {
+      nodeInput(childId, relativePosition);
+    }
+  }
+}
+
 export function renderNode(nodeId: number, now: number, delta: number): void
 {
   if (node_enabled[nodeId])
@@ -120,17 +165,26 @@ export function renderNode(nodeId: number, now: number, delta: number): void
         case TAG.SPRITE:
           renderSprite(nodeId, delta);
           break;
+        case TAG.WINDOW:
+          renderWindow(nodeId);
+          break;
+        case TAG.BUTTON:
+          renderButton(nodeId);
+          break;
         case TAG.NONE:
         default:
       }
     }
 
     // @ifdef DEBUG
-    // const size = nodeSize(nodeId);
-    // pushQuad(0, 0, 1, size[1], 0xFF00ff00);
-    // pushQuad(0, 0, size[0], 1, 0xFF00ff00);
-    // pushQuad(size[0] - 1, 0, 1, size[1], 0xFF00ff00);
-    // pushQuad(0, size[1] - 1, size[0], 1, 0xFF00ff00);
+    // if (inputContext.hot === nodeId)
+    // {
+    //   const size = nodeSize(nodeId);
+    //   pushQuad(0, 0, 1, size[1], 0xFF00ff00);
+    //   pushQuad(0, 0, size[0], 1, 0xFF00ff00);
+    //   pushQuad(size[0] - 1, 0, 1, size[1], 0xFF00ff00);
+    //   pushQuad(0, size[1] - 1, size[0], 1, 0xFF00ff00);
+    // }
     // @endif
 
     for (let childId of node_children[nodeId])
@@ -154,8 +208,8 @@ export function createTextNode(text: string, scale: number = 1, align: Align = A
 export function updateTextNode(nodeId: number, text: string, scale: number = 1, align: Align = Align.Left, shadow: boolean = false): void
 {
   const lines = parseText(text);
-  const width = textWidth(text.length, scale);
-  const height = textHeight(lines, scale);
+  const width = textWidth(text.length, 1);
+  const height = textHeight(lines, 1);
   node_size[nodeId] = [width, height];
   node_text_align[nodeId] = align;
   node_drop_shadow[nodeId] = shadow;
@@ -175,6 +229,7 @@ function renderTextNode(nodeId: number): void
 }
 //#endregion Text Node
 
+//#region Sprite Node
 export type Frame = { spriteName: string, duration: number }
 const node_sprite_frames: Map<number, Frame[]> = new Map();
 const node_sprite_timestamp: number[] = [];
@@ -185,6 +240,12 @@ export function createSprite(frames: Frame[], scale: number = 1, shadow: boolean
 
   node_tags[nodeId] = TAG.SPRITE;
 
+  const t = TEXTURE_CACHE.get(frames[0].spriteName);
+  // @ifdef DEBUG
+  assert(t !== undefined, `Unable to load texture ${ frames[0].spriteName }`);
+  // @endif
+
+  node_size[nodeId] = [t.w, t.h];
   node_scale[nodeId] = scale;
   node_drop_shadow[nodeId] = shadow;
 
@@ -236,4 +297,57 @@ function renderSprite(nodeId: number, delta: number): void
     }
     pushSprite(currentFrame.spriteName, 0, 0, 0xFFFFFFFFFF, scale, scale);
   }
+}
+//#endregion Sprite Node
+
+//#region Window Node
+export function createWindowNode(pos: v2, size: v2): number
+{
+  const nodeId = createNode();
+  node_tags[nodeId] = TAG.WINDOW;
+  node_position[nodeId] = pos;
+  node_size[nodeId] = size;
+  return nodeId;
+}
+
+function renderWindow(nodeId: number): void
+{
+  const size = nodeSize(nodeId);
+
+  pushQuad(0, 0, size[0], size[1], 0xFFFFFFFF);
+  pushQuad(2, 2, size[0] - 4, size[1] - 4, 0xFF000000);
+}
+//#endregion Window Node
+
+export function createButtonNode(text: string, pos: v2, size: v2): number
+{
+  const nodeId = createNode();
+  node_tags[nodeId] = TAG.BUTTON;
+  node_position[nodeId] = pos;
+  node_size[nodeId] = size;
+  node_text[nodeId] = text;
+
+  return nodeId;
+}
+
+function renderButton(nodeId: number): void
+{
+  const size = nodeSize(nodeId);
+
+  if (inputContext.hot === nodeId)
+  {
+    pushQuad(0, 0, size[0], size[1], 0xFFFFFFFF);
+    pushQuad(2, 2, size[0] - 4, size[1] - 4, 0xFF2d2d2d);
+  }
+  else
+  {
+    pushQuad(0, 0, size[0], size[1], 0xFFFFFFFF);
+    pushQuad(2, 2, size[0] - 4, size[1] - 4, 0xFF000000);
+  }
+  if (inputContext.fire === nodeId)
+  {
+    zzfxP(buttonHover);
+  }
+  pushText(node_text[nodeId], Math.floor(size[0] / 2), Math.floor(size[1] / 2) - 8, { textAlign: Align.Center, scale: 2 });
+
 }

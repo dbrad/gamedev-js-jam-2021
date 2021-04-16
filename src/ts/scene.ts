@@ -1,20 +1,6 @@
+import { Scenes } from "./scene-manager";
 import { campRootId } from "./scenes/camp";
 import { mainMenuRootId } from "./scenes/main-menu";
-
-export const enum Scenes
-{
-  MainMenu,
-  Camp,
-  Game,
-  GameOver
-}
-
-export let CurrentScene: Scenes = Scenes.Camp;
-
-export function setScene(scene: Scenes): void
-{
-  CurrentScene = scene;
-}
 
 export function getSceneRootId(scene: Scenes): number 
 {

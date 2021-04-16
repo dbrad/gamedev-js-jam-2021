@@ -1,74 +1,65 @@
-import { emit } from "./event";
+import { screenHeight, screenWidth } from "./screen";
 
-export enum Key
+export const inputContext = {
+  hot: -1,
+  active: -1,
+  fire: -1
+}
+export const cursor = [0, 0];
+export let mouseDown = false;
+let canvasRef: HTMLCanvasElement;
+
+const isTouch = (e: Event | PointerEvent | TouchEvent): e is TouchEvent =>
 {
-  UNKNOWN,
-  UP,
-  DOWN,
-  LEFT,
-  RIGHT
+  return (e.type[0] === "t");
 }
 
-export const keyUp: boolean[] = [];
-export const keyDown: boolean[] = [];
-
-
-export function initInput(): void
+const pointerMove = (e: PointerEvent | TouchEvent) =>
 {
-  window.addEventListener("keydown", (ev) =>
+  const canvasBounds = canvasRef.getBoundingClientRect();
+  if (isTouch(e))
   {
-    let key: Key = Key.UNKNOWN;
-    switch (ev.code)
-    {
-      case "KeyW":
-      case "KeyZ":
-      case "ArrowUp":
-        key = Key.UP;
-        break;
-      case "KeyS":
-      case "ArrowDown":
-        key = Key.DOWN;
-        break;
-      case "KeyA":
-      case "KeyQ":
-      case "ArrowLeft":
-        key = Key.LEFT;
-        break;
-      case "KeyD":
-      case "ArrowRight":
-        key = Key.RIGHT;
-        break;
-    }
-    keyDown[key] = true;
-    emit("key_pressed", key)
-    keyUp[key] = false;
-  });
+    e.preventDefault();
+    const touch: Touch = e.touches[0];
+    cursor[0] = Math.floor((touch.clientX - canvasBounds.left) / (canvasBounds.width / screenWidth));
+    cursor[1] = Math.floor((touch.clientY - canvasBounds.top) / (canvasBounds.height / screenHeight));
+    return;
+  }
+  e = e as PointerEvent;
+  cursor[0] = Math.floor((e.clientX - canvasBounds.left) / (canvasBounds.width / screenWidth));
+  cursor[1] = Math.floor((e.clientY - canvasBounds.top) / (canvasBounds.height / screenHeight));
+}
 
-  window.addEventListener("keyup", (ev) =>
+const pointerDown = (e: PointerEvent | TouchEvent) =>
+{
+  if (isTouch(e))
   {
-    let key: Key = Key.UNKNOWN;
-    switch (ev.code)
-    {
-      case "KeyW":
-      case "KeyZ":
-      case "ArrowUp":
-        key = Key.UP;
-        break;
-      case "KeyS":
-      case "ArrowDown":
-        key = Key.DOWN;
-        break;
-      case "KeyA":
-      case "KeyQ":
-      case "ArrowLeft":
-        key = Key.LEFT;
-        break;
-      case "KeyD":
-      case "ArrowRight":
-        key = Key.RIGHT;
-        break;
-    }
-    keyDown[key] = false;
-    keyUp[key] = true;
-  });
+    const canvasBounds = canvasRef.getBoundingClientRect();
+    const touchEvent = e as TouchEvent;
+    touchEvent.preventDefault();
+    const touch: Touch = touchEvent.touches[0];
+    cursor[0] = Math.floor((touch.clientX - canvasBounds.left) / (canvasBounds.width / screenWidth));
+    cursor[1] = Math.floor((touch.clientY - canvasBounds.top) / (canvasBounds.height / screenHeight));
+  }
+
+  mouseDown = true;
+}
+
+const pointerUp = (_: PointerEvent | TouchEvent) =>
+{
+  mouseDown = false;
+}
+
+export function initializeInput(canvas: HTMLCanvasElement)
+{
+  canvasRef = canvas;
+
+  document.addEventListener("pointermove", pointerMove);
+  document.addEventListener("touchmove", pointerMove);
+
+  canvas.addEventListener("pointerdown", pointerDown);
+  canvas.addEventListener("touchstart", pointerDown);
+
+  canvas.addEventListener("pointerup", pointerUp);
+  canvas.addEventListener("touchend", pointerUp);
 }

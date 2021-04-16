@@ -1,11 +1,12 @@
-import { CurrentScene, getSceneRootId } from "./scene";
+import { CurrentScene, Scenes } from "./scene-manager";
 import { campScene, setupCampScene } from "./scenes/camp";
 import { gl_clear, gl_flush, gl_getContext, gl_init, gl_setClear } from "./gl"
+import { initializeInput, inputContext } from "./input";
 import { mainMenuScene, mainMenuTransitionIn, setupMainMenuScene } from "./scenes/main-menu";
-import { moveNode, node_movement, renderNode } from "./node";
+import { moveNode, nodeInput, node_movement, renderNode } from "./node";
 import { screenHeight, screenWidth } from "./screen";
 
-import { initInput } from "./input";
+import { getSceneRootId } from "./scene";
 import { interpolate } from "./interpolate";
 import { loadAsset } from "./asset";
 import { showDialog } from "./dialog";
@@ -21,7 +22,9 @@ window.addEventListener(`load`, async () =>
   canvas.height = screenHeight;
   let context = gl_getContext(canvas);
   gl_init(context);
-  initInput();
+  initializeInput(canvas);
+
+  await loadAsset("sheet");
 
   setupMainMenuScene();
   setupCampScene();
@@ -46,17 +49,28 @@ window.addEventListener(`load`, async () =>
       }
     }
     currentSceneRootId = getSceneRootId(CurrentScene);
-    // mainMenuScene(now, delta);
-    campScene();
+
+    nodeInput(currentSceneRootId)
+
+    switch (CurrentScene)
+    {
+      case Scenes.MainMenu:
+        mainMenuScene(now, delta);
+        break;
+      case Scenes.Camp:
+        campScene();
+        break;
+    }
+
     renderNode(currentSceneRootId, now, delta);
     // showDialog("Hello little reflection... Still have your wits about you, eh?", 3000, now, "The Smith");
 
+    inputContext.fire = -1;
 
     gl_flush();
     window.requestAnimationFrame(loop);
   };
 
-  await loadAsset("sheet");
   // await mainMenuTransitionIn();
   gl_setClear(0, 0, 0);
   then = window.performance.now();
