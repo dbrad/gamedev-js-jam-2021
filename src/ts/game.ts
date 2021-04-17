@@ -11,6 +11,7 @@ import { interpolate } from "./interpolate";
 import { loadAsset } from "./asset";
 import { showDialog } from "./dialog";
 import { v2 } from "./v2";
+import { tickStats } from "./stats";
 
 window.addEventListener(`load`, async () =>
 {
@@ -68,6 +69,11 @@ window.addEventListener(`load`, async () =>
     inputContext.fire = -1;
 
     gl_flush();
+    // @ifdef DEBUG
+    tickStats(delta, now);
+    gl_flush();
+    // @endif
+
     window.requestAnimationFrame(loop);
   };
 

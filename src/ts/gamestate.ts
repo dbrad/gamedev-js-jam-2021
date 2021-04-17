@@ -60,7 +60,7 @@ type GameState = {
   player: Player,
   currencies: Currencies,
   inventory: Item[],
-  currentMap: [],
+  currentMap: Int8Array,
 }
 export const gameState: GameState = {
   player: {
@@ -91,5 +91,5 @@ export const gameState: GameState = {
     goldFragments: 0,
   },
   inventory: [],
-  currentMap: []
+  currentMap: new Int8Array(110 * 72)
 }

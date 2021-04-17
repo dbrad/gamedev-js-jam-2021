@@ -2,9 +2,10 @@ import { Scenes, setScene } from "../scene-manager";
 import { addChildNode, createButtonNode, createNode, createTextNode, moveNode, node_movement, node_position, node_size, node_visible } from "../node";
 import { screenCenterX, screenCenterY, screenHeight, screenWidth } from "../screen";
 
-import { Align } from "../draw";
+import { Align, pushQuad } from "../draw";
 import { inputContext } from "../input";
-import { generateLevel } from "./mission-select";
+import { gameSetup } from "./mission-select";
+import { gameState } from "../gamestate";
 
 export let mainMenuRootId = -1;
 let mainMenuTitleTextId = -1;
@@ -51,7 +52,17 @@ export function mainMenuScene(now: number, delta: number): void
 {
   if (inputContext.fire === startGameTextId)
   {
-    generateLevel(10);
+    gameSetup();
     //setScene(Scenes.Camp);
+  }
+  for (let y = 0; y < 72; y++)
+  {
+    for (let x = 0; x < 110; x++)
+    {
+      let qx = x * 2 - 8;
+      let qy = y * 2 + 180;
+      let col = gameState.currentMap[y * 110 + x] === 2 ? 0xFFFFFFFF : gameState.currentMap[y * 110 + x] === 1 ? 0xFFBBBBBB : 0xFF000000;
+      pushQuad(qx, qy, 2, 2, col);
+    }
   }
 }
