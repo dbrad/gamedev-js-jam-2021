@@ -12,6 +12,7 @@ import { loadAsset } from "./asset";
 import { showDialog } from "./dialog";
 import { v2 } from "./v2";
 import { tickStats } from "./stats";
+import { adventure, setupAdventureScene } from "./scenes/adventure";
 
 window.addEventListener(`load`, async () =>
 {
@@ -29,6 +30,7 @@ window.addEventListener(`load`, async () =>
 
   setupMainMenuScene();
   setupCampScene();
+  setupAdventureScene();
 
   let then: number;
   let delta: number;
@@ -60,6 +62,9 @@ window.addEventListener(`load`, async () =>
         break;
       case Scenes.Camp:
         campScene();
+        break;
+      case Scenes.Adventure:
+        adventure(now, delta);
         break;
     }
 

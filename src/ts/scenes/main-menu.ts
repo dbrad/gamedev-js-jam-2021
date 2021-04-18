@@ -4,8 +4,7 @@ import { screenCenterX, screenCenterY, screenHeight, screenWidth } from "../scre
 
 import { Align, pushQuad } from "../draw";
 import { inputContext } from "../input";
-import { gameSetup } from "./mission-select";
-import { gameState } from "../gamestate";
+import { generateLevel } from "./mission-select";
 
 export let mainMenuRootId = -1;
 let mainMenuTitleTextId = -1;
@@ -52,17 +51,7 @@ export function mainMenuScene(now: number, delta: number): void
 {
   if (inputContext.fire === startGameTextId)
   {
-    gameSetup();
-    //setScene(Scenes.Camp);
-  }
-  for (let y = 0; y < 72; y++)
-  {
-    for (let x = 0; x < 110; x++)
-    {
-      let qx = x * 2 - 8;
-      let qy = y * 2 + 180;
-      let col = gameState.currentMap[y * 110 + x] === 2 ? 0xFFFFFFFF : gameState.currentMap[y * 110 + x] === 1 ? 0xFFBBBBBB : 0xFF000000;
-      pushQuad(qx, qy, 2, 2, col);
-    }
+    generateLevel();
+    setScene(Scenes.Adventure);
   }
 }

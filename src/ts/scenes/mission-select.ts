@@ -3,15 +3,15 @@ import { rand, shuffle } from "../random";
 
 const base_room =
   [
-    2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-    2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2,
-    2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2,
-    2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2,
-    2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2,
-    2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2,
-    2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2,
-    2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2,
-    2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+    1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1,
+    1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1,
+    1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1,
+    1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1,
+    1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1,
+    1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1,
+    1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1,
+    1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
   ];
 
 const north_door = [5, 0];
@@ -25,9 +25,9 @@ const roomWidth = 11;
 const roomHeight = 9;
 const tileMapWidth = 110;
 const tileMapHeight = 72;
-export function gameSetup(): void
+export function generateLevel(): void
 {
-  const roomMap = generateRoomLayout(5);
+  const roomMap = generateRoomLayout(10);
   const tileMap: Int8Array = new Int8Array(tileMapWidth * tileMapHeight);
   for (let ry = 0; ry < roomMapHeight; ry++)
   {
@@ -52,53 +52,36 @@ export function gameSetup(): void
           const nx = x + north_door[0];
           const ny = y + north_door[1];
           const index = ny * tileMapWidth + nx;
-          tileMap[index] = 1;
+          tileMap[index] = 5;
         }
         if (roomMap[roomIndex + 1] === 1)
         {
           const nx = x + east_door[0];
           const ny = y + east_door[1];
           const index = ny * tileMapWidth + nx;
-          tileMap[index] = 1;
+          tileMap[index] = 5;
+          tileMap[index - 110] = 2;
+
         }
         if (roomMap[roomIndex + 10] === 1)
         {
           const nx = x + south_door[0];
           const ny = y + south_door[1];
           const index = ny * tileMapWidth + nx;
-          tileMap[index] = 1;
+          tileMap[index] = 5;
         }
         if (roomMap[roomIndex - 1] === 1)
         {
           const nx = x + west_door[0];
           const ny = y + west_door[1];
           const index = ny * tileMapWidth + nx;
-          tileMap[index] = 1;
+          tileMap[index] = 5;
+          tileMap[index - 110] = 2;
         }
-
       }
     }
   }
   gameState.currentMap = tileMap;
-  // let line = 10;
-  // for (let y = 0; y < tileMapHeight; y++)
-  // {
-  //   let str = "";
-  //   for (let x = 0; x < tileMapWidth; x++)
-  //   {
-  //     if (tileMap[y * tileMapWidth + x] === 2)
-  //     {
-  //       str += "#";
-  //     }
-  //     else
-  //     {
-  //       str += " ";
-  //     }
-  //   }
-  //   console.log(`${ line }. ${ str }`);
-  //   line++;
-  // }
-
 }
 
 function generateRoomLayout(difficulty: number): number[]
@@ -161,23 +144,6 @@ function generateRoomLayout(difficulty: number): number[]
       }
     } while (roomQueue.length > 0);
   }
-
-  // for (let y = 0; y < roomMapHeight; y++)
-  // {
-  //   let str = "";
-  //   for (let x = 0; x <= roomMapWidth; x++)
-  //   {
-  //     if (map[y * 10 + x] === 1)
-  //     {
-  //       str += "#"
-  //     }
-  //     else
-  //     {
-  //       str += " ";
-  //     }
-  //   }
-  //   console.log(str);
-  // }
 
   return map;
 }

@@ -14,7 +14,8 @@ export const enum TAG
   TEXT,
   SPRITE,
   WINDOW,
-  BUTTON
+  BUTTON,
+  MOVEMENT_BUTTON
 }
 
 //#region Base Node Data
@@ -25,6 +26,7 @@ export const node_movement: Map<number, InterpolationData> = new Map();
 export const node_size: v2[] = [];
 export const node_scale: number[] = [];
 export const node_enabled: boolean[] = [];
+export const node_interactive: boolean[] = [];
 export const node_tags: TAG[] = [];
 export const node_visible: boolean[] = [];
 export const node_parent: number[] = [0];
@@ -54,6 +56,7 @@ export function createNode(): number
 
   node_enabled[id] = true;
   node_visible[id] = true;
+  node_interactive[id] = true;
 
   return id;
 }
@@ -108,6 +111,7 @@ export function nodeSize(nodeId: number): v2
 
 export function nodeInput(nodeId: number, cursorPosition: number[] = cursor): void
 {
+  if (!node_enabled[nodeId] || !node_interactive[nodeId]) return;
   const position = node_position[nodeId];
   const size = nodeSize(nodeId);
   const relativePosition = [cursorPosition[0] - position[0], cursorPosition[1] - position[1]];
@@ -171,6 +175,9 @@ export function renderNode(nodeId: number, now: number, delta: number): void
         case TAG.BUTTON:
           renderButton(nodeId);
           break;
+        case TAG.MOVEMENT_BUTTON:
+          renderMovementButton(nodeId, now, delta);
+          break;
         case TAG.NONE:
         default:
       }
@@ -232,7 +239,7 @@ function renderTextNode(nodeId: number): void
 //#region Sprite Node
 export type Frame = { spriteName: string, duration: number }
 const node_sprite_frames: Map<number, Frame[]> = new Map();
-const node_sprite_timestamp: number[] = [];
+export const node_sprite_timestamp: number[] = [];
 const node_sprite_duration: number[] = [];
 export function createSprite(frames: Frame[], scale: number = 1, shadow: boolean = false): number
 {
@@ -350,4 +357,47 @@ function renderButton(nodeId: number): void
   }
   pushText(node_text[nodeId], Math.floor(size[0] / 2), Math.floor(size[1] / 2) - 8, { textAlign: Align.Center, scale: 2 });
 
+}
+
+export enum Direction
+{
+  Up,
+  Right,
+  Down,
+  Left
+}
+export function createMovementButtonNode(direction: Direction): number
+{
+  const nodeId = createNode();
+  node_tags[nodeId] = TAG.MOVEMENT_BUTTON;
+  node_size[nodeId] = [32, 32];
+
+  let dirStr = "up";
+  if (direction === Direction.Down)
+    dirStr = "down";
+  else if (direction === Direction.Left)
+    dirStr = "left";
+  else if (direction === Direction.Right)
+    dirStr = "right";
+
+  let frames: Frame[] = [
+    { spriteName: `${ dirStr }_arrow_01`, duration: 250 },
+    { spriteName: `${ dirStr }_arrow_02`, duration: 250 },
+    { spriteName: `${ dirStr }_arrow_03`, duration: 250 },
+  ];
+
+  const spriteId = createSprite(frames);
+  node_interactive[spriteId] = false;
+  moveNode(spriteId, [8, 8]);
+  addChildNode(nodeId, spriteId);
+
+  return nodeId;
+}
+
+function renderMovementButton(nodeId: number, now: number, delta: number): void
+{
+  const size = nodeSize(nodeId);
+
+  pushQuad(0, 0, size[0], size[1], 0xFFFFFFFF);
+  pushQuad(2, 2, size[0] - 4, size[1] - 4, 0xFF000000);
 }

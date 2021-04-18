@@ -119,12 +119,54 @@
       "name": [
         "grass_01",
         "grass_02",
-        "grass_03"
+        "grass_03",
+        "up_arrow_01",
+        "up_arrow_02",
+        "up_arrow_03",
+        "down_arrow_01",
+        "down_arrow_02",
+        "down_arrow_03",
+        "left_arrow_01",
+        "left_arrow_02",
+        "left_arrow_03",
+        "right_arrow_01",
+        "right_arrow_02",
+        "right_arrow_03"
       ],
       "x": 0,
       "y": 32,
       "w": 16,
       "h": 16
+    },
+    {
+      "type": "row",
+      "name": [
+        "wall_01",
+        "wall_02",
+        "wall_03",
+        "wall_04",
+        "floor_01",
+        "floor_02",
+        "floor_03",
+        "floor_04"
+      ],
+      "x": 0,
+      "y": 48,
+      "w": 8,
+      "h": 8
+    },
+    {
+      "type": "row",
+      "name": [
+        "player_map_01",
+        "player_map_02",
+        "enemy_map_01",
+        "enemy_map_02"
+      ],
+      "x": 0,
+      "y": 56,
+      "w": 8,
+      "h": 8
     }
   ]
 }

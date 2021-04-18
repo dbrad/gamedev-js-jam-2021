@@ -38,8 +38,8 @@ export function tickStats(delta: number, frameStart: number): void
   }
   frameCount++;
 
-  pushText(displayFps, 638, 1, { textAlign: Align.Right });
-  pushText(displayMs, 638, 10, { textAlign: Align.Right });
-  pushText(displayFrameTime, 638, 19, { textAlign: Align.Right });
+  pushText(displayFps, 635, 4, { textAlign: Align.Right });
+  pushText(displayMs, 635, 13, { textAlign: Align.Right });
+  pushText(displayFrameTime, 635, 22, { textAlign: Align.Right });
   // @endif
 }

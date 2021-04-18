@@ -2,8 +2,7 @@ export const enum Scenes
 {
   MainMenu,
   Camp,
-  Game,
-  GameOver
+  Adventure,
 }
 
 export let CurrentScene: Scenes = Scenes.MainMenu;
