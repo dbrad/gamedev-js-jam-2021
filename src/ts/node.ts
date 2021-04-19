@@ -1,12 +1,19 @@
 import { Align, parseText, pushQuad, pushSprite, pushSpriteAndSave, pushText, textHeight, textWidth } from "./draw";
 import { Easing, InterpolationData, createInterpolationData } from "./interpolate";
-import { buttonHover, zzfxP } from "./zzfx";
 import { cursor, inputContext, mouseDown } from "./input";
 import { gl_restore, gl_save, gl_translate } from "./gl";
 
 import { TEXTURE_CACHE } from "./texture";
 import { assert } from "./debug";
 import { v2 } from "./v2";
+
+//import { buttonHover, zzfxP } from "./zzfx";
+
+
+
+
+
+
 
 export const enum TAG
 {
@@ -358,7 +365,7 @@ function renderButton(nodeId: number): void
   }
   if (inputContext.fire === nodeId)
   {
-    zzfxP(buttonHover);
+    // zzfxP(buttonHover);
   }
   pushText(node_text[nodeId], Math.floor(size[0] / 2), Math.floor(size[1] / 2) - 8, { textAlign: Align.Center, scale: 2 });
 
