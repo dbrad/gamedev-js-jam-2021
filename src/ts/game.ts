@@ -1,12 +1,18 @@
-import { CurrentScene, getSceneRootId } from "./scene";
+import { CurrentScene, Scenes } from "./scene-manager";
+import { campScene, setupCampScene } from "./scenes/camp";
 import { gl_clear, gl_flush, gl_getContext, gl_init, gl_setClear } from "./gl"
-import { mainMenuScene, setupMainMenuScene } from "./scenes/main-menu";
-import { moveNode, node_movement, renderNode } from "./node";
+import { initializeInput, inputContext } from "./input";
+import { mainMenuScene, mainMenuTransitionIn, setupMainMenuScene } from "./scenes/main-menu";
+import { moveNode, nodeInput, node_movement, renderNode } from "./node";
 import { screenHeight, screenWidth } from "./screen";
 
+import { getSceneRootId } from "./scene";
 import { interpolate } from "./interpolate";
 import { loadAsset } from "./asset";
+import { showDialog } from "./dialog";
 import { v2 } from "./v2";
+import { tickStats } from "./stats";
+import { adventure, setupAdventureScene } from "./scenes/adventure";
 
 window.addEventListener(`load`, async () =>
 {
@@ -18,8 +24,13 @@ window.addEventListener(`load`, async () =>
   canvas.height = screenHeight;
   let context = gl_getContext(canvas);
   gl_init(context);
+  initializeInput(canvas);
+
+  await loadAsset("sheet");
 
   setupMainMenuScene();
+  setupCampScene();
+  setupAdventureScene();
 
   let then: number;
   let delta: number;
@@ -41,15 +52,38 @@ window.addEventListener(`load`, async () =>
       }
     }
     currentSceneRootId = getSceneRootId(CurrentScene);
-    mainMenuScene(now, delta);
+
+    nodeInput(currentSceneRootId)
+
+    switch (CurrentScene)
+    {
+      case Scenes.MainMenu:
+        mainMenuScene(now, delta);
+        break;
+      case Scenes.Camp:
+        campScene();
+        break;
+      case Scenes.Adventure:
+        adventure(now, delta);
+        break;
+    }
+
     renderNode(currentSceneRootId, now, delta);
+    // showDialog("Hello little reflection... Still have your wits about you, eh?", 3000, now, "The Smith");
+
+    inputContext.fire = -1;
 
     gl_flush();
+    // @ifdef DEBUG
+    tickStats(delta, now);
+    gl_flush();
+    // @endif
+
     window.requestAnimationFrame(loop);
   };
 
-  await loadAsset("sheet");
-  gl_setClear(50, 25, 75);
+  // await mainMenuTransitionIn();
+  gl_setClear(0, 0, 0);
   then = window.performance.now();
   window.requestAnimationFrame(loop);
 });
