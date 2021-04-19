@@ -4,7 +4,7 @@ import { adventure, setupAdventureScene } from "./scenes/adventure";
 import { campScene, setupCampScene } from "./scenes/camp";
 import { gl_clear, gl_flush, gl_getContext, gl_init, gl_setClear } from "./gl"
 import { initializeInput, inputContext } from "./input";
-import { mainMenuScene, mainMenuTransitionIn, setupMainMenuScene } from "./scenes/main-menu";
+import { mainMenuScene, setupMainMenuScene } from "./scenes/main-menu";
 import { moveNode, nodeInput, node_movement, renderNode } from "./node";
 import { screenCenterX, screenCenterY, screenHeight, screenWidth } from "./screen";
 
@@ -26,12 +26,7 @@ window.addEventListener(`load`, async () =>
   let context = gl_getContext(canvas);
   gl_init(context);
   initializeInput(canvas);
-
   await loadAsset("sheet");
-
-  setupMainMenuScene();
-  setupCampScene();
-  setupAdventureScene();
 
   let then: number;
   let delta: number;
@@ -43,6 +38,10 @@ window.addEventListener(`load`, async () =>
     playing = true;
     canvas.removeEventListener("pointerdown", playGame);
     canvas.removeEventListener("touchstart", playGame);
+
+    setupMainMenuScene();
+    setupCampScene();
+    setupAdventureScene();
   };
   canvas.addEventListener("pointerdown", playGame);
   canvas.addEventListener("touchstart", playGame);
@@ -83,6 +82,8 @@ window.addEventListener(`load`, async () =>
       }
 
       renderNode(currentSceneRootId, now, delta);
+
+      // Event / Dialog System
       // showDialog("Hello little reflection... Still have your wits about you, eh?", 3000, now, "The Smith");
 
       inputContext.fire = -1;
@@ -101,7 +102,6 @@ window.addEventListener(`load`, async () =>
     window.requestAnimationFrame(loop);
   };
 
-  // await mainMenuTransitionIn();
   gl_setClear(0, 0, 0);
   then = window.performance.now();
   window.requestAnimationFrame(loop);
