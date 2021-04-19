@@ -1,5 +1,6 @@
+import { v2 } from "./v2"
 
-type Currencies = {
+export type Currencies = {
   sand: number,
   mirrorFragments: number,
   brassFragments: number,
@@ -56,11 +57,71 @@ type Player = {
   defense: number,
   mirror: Mirror
 }
+export type Enemy = {
+  name: string,
+  health: number,
+  maxHealth: number,
+  attack: number,
+  defense: number,
+  abilities: null
+}
+
+export enum LootType
+{
+  Sand,
+  Mirror,
+  Brass,
+  Steel,
+  Silver,
+  Gold
+}
+type Loot = {
+  type: LootType,
+  amount: number
+}
+
+type EventChoice = {
+  label: string,
+  outcome: () => void
+}
+enum EventType
+{
+  Dialog,
+  Choice,
+  Boon,
+  Curse
+}
+type Event = {
+  type: EventType,
+  dialog: string,
+  choices: EventChoice | null,
+  outcome: () => void | null
+}
+
+export type Room = {
+  seen: boolean,
+  peeked: boolean,
+  enemies: Enemy[],
+  loot: Loot[],
+  events: Event[]
+}
+type Level = {
+  tileMap: Int8Array,
+  playerPosition: v2,
+  rooms: Room[],
+}
+export const nullLevel: Level = {
+  tileMap: new Int8Array(),
+  playerPosition: [0, 0],
+  rooms: []
+};
+
 type GameState = {
   player: Player,
   currencies: Currencies,
   inventory: Item[],
-  currentMap: Int8Array,
+  currentLevel: Level,
+  currentEvent: Event | null
 }
 export const gameState: GameState = {
   player: {
@@ -91,5 +152,6 @@ export const gameState: GameState = {
     goldFragments: 0,
   },
   inventory: [],
-  currentMap: new Int8Array(110 * 72)
+  currentLevel: nullLevel,
+  currentEvent: null
 }

@@ -4,7 +4,7 @@ import { screenCenterX, screenCenterY, screenHeight, screenWidth } from "../scre
 
 import { Align, pushQuad } from "../draw";
 import { inputContext } from "../input";
-import { generateLevel } from "./mission-select";
+import { gameSetup } from "./mission-select";
 
 export let mainMenuRootId = -1;
 let mainMenuTitleTextId = -1;
@@ -51,7 +51,7 @@ export function mainMenuScene(now: number, delta: number): void
 {
   if (inputContext.fire === startGameTextId)
   {
-    generateLevel();
+    gameSetup();
     setScene(Scenes.Adventure);
   }
 }

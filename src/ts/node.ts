@@ -246,7 +246,15 @@ export function createSprite(frames: Frame[], scale: number = 1, shadow: boolean
   const nodeId = createNode();
 
   node_tags[nodeId] = TAG.SPRITE;
+  node_drop_shadow[nodeId] = shadow;
 
+  updateSprite(nodeId, frames, scale);
+
+  return nodeId;
+}
+
+export function updateSprite(nodeId: number, frames: Frame[], scale: number = 1): void
+{
   const t = TEXTURE_CACHE.get(frames[0].spriteName);
   // @ifdef DEBUG
   assert(t !== undefined, `Unable to load texture ${ frames[0].spriteName }`);
@@ -254,7 +262,6 @@ export function createSprite(frames: Frame[], scale: number = 1, shadow: boolean
 
   node_size[nodeId] = [t.w, t.h];
   node_scale[nodeId] = scale;
-  node_drop_shadow[nodeId] = shadow;
 
   node_sprite_frames.set(nodeId, frames);
   let duration = 0;
@@ -265,8 +272,6 @@ export function createSprite(frames: Frame[], scale: number = 1, shadow: boolean
 
   node_sprite_duration[nodeId] = duration;
   node_sprite_timestamp[nodeId] = 0;
-
-  return nodeId;
 }
 
 function renderSprite(nodeId: number, delta: number): void

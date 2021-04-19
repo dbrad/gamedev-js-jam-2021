@@ -161,7 +161,9 @@
         "player_map_01",
         "player_map_02",
         "enemy_map_01",
-        "enemy_map_02"
+        "enemy_map_02",
+        "chest_closed",
+        "chest_open"
       ],
       "x": 0,
       "y": 56,

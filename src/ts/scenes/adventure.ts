@@ -1,12 +1,20 @@
-import { Align, pushQuad, pushSpriteAndSave, pushText } from "../draw";
-import { gameState } from "../gamestate";
+import { Align, pushQuad, pushSpriteAndSave } from "../draw";
+import { Currencies, gameState, LootType } from "../gamestate";
 import { inputContext } from "../input";
 import { createInterpolationData, Easing, interpolate, InterpolationData } from "../interpolate";
-import { addChildNode, createMovementButtonNode, createNode, createTextNode, createWindowNode, Direction, moveNode, node_children, node_enabled, node_movement, node_size, node_sprite_timestamp, node_visible } from "../node";
+import { addChildNode, createMovementButtonNode, createNode, createTextNode, createWindowNode, Direction, moveNode, node_children, node_enabled, node_size, node_sprite_timestamp, node_visible, updateTextNode } from "../node";
 import { screenWidth, screenHeight, screenCenterX, screenCenterY } from "../screen";
 import { v2 } from "../v2";
+import { combat, prepareCombatScene } from "./combat";
 
 export let adventureRootId = -1;
+let sandAmountId = -1;
+let mirrorAmountId = -1;
+let brassAmountId = -1;
+let steelAmountId = -1;
+let silverAmountId = -1;
+let goldAmountId = -1;
+
 let directionUpId = -1;
 let directionDownId = -1;
 let directionLeftId = -1;
@@ -15,12 +23,25 @@ let directionRightId = -1;
 let cameraLERP: InterpolationData | null;
 let playerLERP: InterpolationData | null;
 
+const currencies: Currencies = {
+  sand: 0,
+  mirrorFragments: 0,
+  brassFragments: 0,
+  steelFragments: 0,
+  silverFragments: 0,
+  goldFragments: 0,
+};
+
+let moneyLERP: InterpolationData | null;
+
 enum mode
 {
   Select,
   Move,
-  Trigger,
+  Triggers,
   Combat,
+  Loot,
+  Events,
 }
 
 export function setupAdventureScene()
@@ -52,6 +73,11 @@ export function setupAdventureScene()
   moveNode(staminaAmount, [120, 16]);
   addChildNode(topBar, staminaAmount);
 
+  sandAmountId = createTextNode("0", 1, Align.Right);
+  moveNode(sandAmountId, [200, 6]);
+  addChildNode(topBar, sandAmountId);
+
+
   directionUpId = createMovementButtonNode(Direction.Up);
   moveNode(directionUpId, [screenCenterX - 8, screenCenterY - 64]);
   addChildNode(adventureRootId, directionUpId);
@@ -69,7 +95,6 @@ export function setupAdventureScene()
   addChildNode(adventureRootId, directionLeftId);
 }
 
-const player: v2 = [60 * 16, 31 * 16];
 const camera: v2 = [60 * 16, 31 * 16];
 const cameraSize: v2 = [41 * 16, 25 * 16];
 const cameraHalfW = Math.floor(cameraSize[0] / 2);
@@ -106,19 +131,31 @@ export function adventure(now: number, delta: number): void
   if (playerLERP)
   {
     let i = interpolate(now, playerLERP);
-    player[0] = Math.floor(i.values[0]);
-    player[1] = Math.floor(i.values[1]);
+    gameState.currentLevel.playerPosition[0] = Math.floor(i.values[0]);
+    gameState.currentLevel.playerPosition[1] = Math.floor(i.values[1]);
     if (i.done)
     {
       playerLERP = null;
     }
   }
 
+  updateTextNode(sandAmountId, `${ currencies.sand }`);
+
   const cameraTopLeft: v2 = [camera[0] - cameraHalfW, camera[1] - cameraHalfH];
   const cameraBottomRight: v2 = [camera[0] + cameraHalfW, camera[1] + cameraHalfH];
 
-  const playerTileX = Math.floor(player[0] / 16);
-  const playerTileY = Math.floor(player[1] / 16);
+  const playerTileX = Math.floor(gameState.currentLevel.playerPosition[0] / 16);
+  const playerTileY = Math.floor(gameState.currentLevel.playerPosition[1] / 16);
+
+  const playerRoomX = Math.floor(playerTileX / 11);
+  const playerRoomY = Math.floor(playerTileY / 9);
+
+  const playerRoomIndex = playerRoomY * 10 + playerRoomX;
+  if (gameState.currentLevel.rooms[playerRoomIndex]) gameState.currentLevel.rooms[playerRoomIndex].seen = true;
+  if (gameState.currentLevel.rooms[playerRoomIndex + 10]) gameState.currentLevel.rooms[playerRoomIndex + 10].peeked = true;
+  if (gameState.currentLevel.rooms[playerRoomIndex - 10]) gameState.currentLevel.rooms[playerRoomIndex - 10].peeked = true;
+  if (gameState.currentLevel.rooms[playerRoomIndex + 1]) gameState.currentLevel.rooms[playerRoomIndex + 1].peeked = true;
+  if (gameState.currentLevel.rooms[playerRoomIndex - 1]) gameState.currentLevel.rooms[playerRoomIndex - 1].peeked = true;
 
   for (let y = cameraTopLeft[1]; y <= cameraBottomRight[1]; y += 16)
   {
@@ -126,15 +163,16 @@ export function adventure(now: number, delta: number): void
     {
       const tileX = Math.floor(x / 16);
       const tileY = Math.floor(y / 16);
+
       if (tileX > 0 && tileX < 110 && tileY >= 0 && tileY < 72)
       {
         const renderX = tileX * 16 - cameraTopLeft[0] - 8;
         const renderY = tileY * 16 - cameraTopLeft[1] - 12;
-        if (gameState.currentMap[tileY * 110 + tileX] === 2)
+        if (gameState.currentLevel?.tileMap[tileY * 110 + tileX] === 2)
         {
           pushSpriteAndSave("wall_02", renderX, renderY, 0xFF1e1e91, 2, 2);
         }
-        else if (gameState.currentMap[tileY * 110 + tileX] === 5)
+        else if (gameState.currentLevel?.tileMap[tileY * 110 + tileX] === 5)
         {
           pushSpriteAndSave("floor_01", renderX, renderY, 0xFFFFFFFF, 2, 2);
         }
@@ -148,6 +186,7 @@ export function adventure(now: number, delta: number): void
           pushSpriteAndSave(`player_map_${ frame }`, renderX, renderY, 0xFFFFFFFF, 2, 2);
         }
 
+        // Lighting
         const distance = Math.sqrt((playerTileX - tileX) ** 2 + (playerTileY - tileY) ** 2);
         if (distance >= 7)
         {
@@ -169,44 +208,66 @@ export function adventure(now: number, delta: number): void
     }
   }
 
-  for (let y = 0; y < 72; y++)
+  const renderX = playerRoomX * 11 * 16 + 5 * 16 - cameraTopLeft[0] - 8;
+  const renderY = playerRoomY * 9 * 16 + 4 * 16 - cameraTopLeft[1] - 12;
+  if (gameState.currentLevel.rooms[playerRoomIndex]?.enemies.length > 0)
   {
-    for (let x = 0; x < 110; x++)
+    pushSpriteAndSave(`enemy_map_${ frame }`, renderX, renderY, 0xFFFFFFFF, 2, 2);
+  }
+  else if (gameState.currentLevel.rooms[playerRoomIndex]?.loot.length > 0)
+  {
+    pushSpriteAndSave(`chest_closed`, renderX, renderY, 0xFFFFFFFF, 2, 2);
+  }
+
+  for (let y = 0; y < 8; y++)
+  {
+    for (let x = 1; x <= 9; x++)
     {
-      let qx = x * 1;
-      let qy = y * 1 + 288;
-      let col = gameState.currentMap[y * 110 + x] === 2 || gameState.currentMap[y * 110 + x] === 1 ? 0xFFFFFFFF : gameState.currentMap[y * 110 + x] === 5 ? 0xFFBBBBBB : 0xFF000000;
-      pushQuad(qx, qy, 1, 1, col);
-      if (x === playerTileX && y === playerTileY)
+      if (playerRoomX === x && playerRoomY === y)
       {
-        pushQuad(qx, qy, 1, 1, 0xFF00FF00);
+        if (frame === "01")
+        {
+          pushQuad(x * 18 + 1, y * 18 + 1 + 200, 16, 16, 0xFFEEEEEE);
+        }
+        else
+        {
+          pushQuad(x * 18 + 1, y * 18 + 1 + 200, 16, 16, 0xFF666666);
+        }
+      }
+      else if (gameState.currentLevel.rooms[y * 10 + x]?.seen)
+      {
+        pushQuad(x * 18 + 1, y * 18 + 1 + 200, 16, 16, 0xFF666666);
+      }
+      else if (gameState.currentLevel.rooms[y * 10 + x]?.peeked)
+      {
+        pushQuad(x * 18 + 1, y * 18 + 1 + 200, 16, 16, 0xFF333333);
       }
     }
   }
 
   if (game_mode === mode.Select)
   {
-    node_enabled[directionUpId] = gameState.currentMap[(playerTileY - 9) * 110 + playerTileX] > 0;
-    node_enabled[directionDownId] = gameState.currentMap[(playerTileY + 9) * 110 + playerTileX] > 0;
-    node_enabled[directionLeftId] = gameState.currentMap[(playerTileY) * 110 + playerTileX - 11] > 0;
-    node_enabled[directionRightId] = gameState.currentMap[(playerTileY) * 110 + playerTileX + 11] > 0;
+    node_enabled[directionUpId] = (gameState.currentLevel.tileMap[(playerTileY - 9) * 110 + playerTileX] || 0) > 0;
+    node_enabled[directionDownId] = (gameState.currentLevel.tileMap[(playerTileY + 9) * 110 + playerTileX] || 0) > 0;
+    node_enabled[directionLeftId] = (gameState.currentLevel.tileMap[(playerTileY) * 110 + playerTileX - 11] || 0) > 0;
+    node_enabled[directionRightId] = (gameState.currentLevel.tileMap[(playerTileY) * 110 + playerTileX + 11] || 0) > 0;
 
     let target: number[] | null = null;
     if (inputContext.active === directionUpId)
     {
-      target = [player[0], player[1] - 16 * 9];
+      target = [gameState.currentLevel.playerPosition[0], gameState.currentLevel.playerPosition[1] - 16 * 9];
     }
     else if (inputContext.active === directionDownId)
     {
-      target = [player[0], player[1] + 16 * 9];
+      target = [gameState.currentLevel.playerPosition[0], gameState.currentLevel.playerPosition[1] + 16 * 9];
     }
     else if (inputContext.active === directionLeftId)
     {
-      target = [player[0] - 16 * 11, player[1]];
+      target = [gameState.currentLevel.playerPosition[0] - 16 * 11, gameState.currentLevel.playerPosition[1]];
     }
     else if (inputContext.active === directionRightId)
     {
-      target = [player[0] + 16 * 11, player[1]];
+      target = [gameState.currentLevel.playerPosition[0] + 16 * 11, gameState.currentLevel.playerPosition[1]];
     }
     if (target)
     {
@@ -222,12 +283,10 @@ export function adventure(now: number, delta: number): void
       node_enabled[directionRightId] = false;
       node_sprite_timestamp[node_children[directionRightId][0]] = 0;
 
-      playerLERP = createInterpolationData(500, player, target, Easing.Linear, () =>
+      cameraLERP = createInterpolationData(500, camera, target, Easing.EaseOutQuad);
+      playerLERP = createInterpolationData(750, gameState.currentLevel.playerPosition, target, Easing.Linear, () =>
       {
-        cameraLERP = createInterpolationData(500, camera, player, Easing.EaseOutQuad, () =>
-        {
-          game_mode = mode.Select;
-        });
+        game_mode = mode.Triggers;
       });
 
       game_mode = mode.Move;
@@ -236,10 +295,102 @@ export function adventure(now: number, delta: number): void
   else if (game_mode === mode.Move)
   {
   }
-  else if (game_mode === mode.Trigger)
+  else if (game_mode === mode.Triggers)
   {
+    if (gameState.currentLevel.rooms[playerRoomIndex]?.enemies.length > 0)
+    {
+      prepareCombatScene(gameState.currentLevel.rooms[playerRoomIndex]?.enemies);
+      gameState.currentLevel.rooms[playerRoomIndex].enemies.length = 0;
+      game_mode = mode.Combat;
+    }
+    else if (gameState.currentLevel.rooms[playerRoomIndex]?.loot.length > 0)
+    {
+      let target = [
+        currencies.sand,
+        currencies.mirrorFragments,
+        currencies.brassFragments,
+        currencies.steelFragments,
+        currencies.silverFragments,
+        currencies.goldFragments,
+      ];
+
+      do
+      {
+        const loot = gameState.currentLevel.rooms[playerRoomIndex]?.loot.pop();
+        if (loot)
+        {
+          switch (loot.type)
+          {
+            case LootType.Sand:
+              target[0] += loot.amount;
+              break;
+            case LootType.Mirror:
+              target[1] += loot.amount;
+              break;
+            case LootType.Brass:
+              target[2] += loot.amount;
+              break;
+            case LootType.Steel:
+              target[3] += loot.amount;
+              break;
+            case LootType.Silver:
+              target[4] += loot.amount;
+              break;
+            case LootType.Gold:
+              target[5] += loot.amount;
+              break;
+          }
+        }
+      } while (gameState.currentLevel.rooms[playerRoomIndex]?.loot.length > 0)
+
+      moneyLERP = createInterpolationData(750,
+        [
+          currencies.sand,
+          currencies.mirrorFragments,
+          currencies.brassFragments,
+          currencies.steelFragments,
+          currencies.silverFragments,
+          currencies.goldFragments,
+        ],
+        target,
+        Easing.Linear)
+      game_mode = mode.Loot;
+    }
+    else if (gameState.currentLevel.rooms[playerRoomIndex]?.events.length > 0)
+    {
+      gameState.currentEvent = gameState.currentLevel.rooms[playerRoomIndex]?.events.shift() ?? null;
+      game_mode = mode.Events;
+    }
+    else
+    {
+      game_mode = mode.Select;
+    }
   }
   else if (game_mode === mode.Combat)
   {
+    combat(now, delta);
+    game_mode = mode.Triggers;
+  }
+  else if (game_mode === mode.Loot)
+  {
+    if (moneyLERP)
+    {
+      let i = interpolate(now, moneyLERP);
+      currencies.sand = Math.floor(i.values[0]);
+      currencies.mirrorFragments = Math.floor(i.values[1]);
+      currencies.brassFragments = Math.floor(i.values[2]);
+      currencies.steelFragments = Math.floor(i.values[3]);
+      currencies.silverFragments = Math.floor(i.values[4]);
+      currencies.goldFragments = Math.floor(i.values[5]);
+      if (i.done)
+      {
+        moneyLERP = null;
+        game_mode = mode.Triggers;
+      }
+    }
+  }
+  else if (game_mode === mode.Events)
+  {
+    game_mode = mode.Select;
   }
 }
