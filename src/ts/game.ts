@@ -2,16 +2,18 @@ import { Align, pushText } from "./draw";
 import { CurrentScene, Scenes } from "./scene-manager";
 import { adventure, setupAdventureScene } from "./scenes/adventure";
 import { campScene, setupCampScene } from "./scenes/camp";
+import { dialogSystem, dialogSystemRootId, setupDialogScene } from "./scenes/dialog";
 import { gl_clear, gl_flush, gl_getContext, gl_init, gl_setClear } from "./gl"
 import { initializeInput, inputContext } from "./input";
 import { mainMenuScene, setupMainMenuScene } from "./scenes/main-menu";
 import { moveNode, nodeInput, node_movement, renderNode } from "./node";
 import { screenCenterX, screenCenterY, screenHeight, screenWidth } from "./screen";
 
+import { gameState } from "./gamestate";
 import { getSceneRootId } from "./scene";
 import { interpolate } from "./interpolate";
 import { loadAsset } from "./asset";
-import { showDialog } from "./dialog";
+import { setupCombatScene } from "./scenes/combat";
 import { tickStats } from "./stats";
 import { v2 } from "./v2";
 
@@ -25,7 +27,6 @@ window.addEventListener(`load`, async () =>
   canvas.height = screenHeight;
   let context = gl_getContext(canvas);
   gl_init(context);
-  initializeInput(canvas);
   await loadAsset("sheet");
 
   let then: number;
@@ -39,9 +40,13 @@ window.addEventListener(`load`, async () =>
     canvas.removeEventListener("pointerdown", playGame);
     canvas.removeEventListener("touchstart", playGame);
 
+    initializeInput(canvas);
+
     setupMainMenuScene();
     setupCampScene();
     setupAdventureScene();
+    //setupCombatScene();
+    setupDialogScene();
   };
   canvas.addEventListener("pointerdown", playGame);
   canvas.addEventListener("touchstart", playGame);
@@ -66,7 +71,14 @@ window.addEventListener(`load`, async () =>
       }
       currentSceneRootId = getSceneRootId(CurrentScene);
 
-      nodeInput(currentSceneRootId)
+      if (gameState.currentEvent)
+      {
+        nodeInput(dialogSystemRootId)
+      }
+      else
+      {
+        nodeInput(currentSceneRootId)
+      }
 
       switch (CurrentScene)
       {
@@ -83,17 +95,31 @@ window.addEventListener(`load`, async () =>
 
       renderNode(currentSceneRootId, now, delta);
 
-      // Event / Dialog System
-      // showDialog("Hello little reflection... Still have your wits about you, eh?", 3000, now, "The Smith");
+      if (gameState.currentEvent)
+      {
+        dialogSystem(now, delta);
+        renderNode(dialogSystemRootId, now, delta);
+      }
 
       inputContext.fire = -1;
+
+      if (gameState.flags["clear_input"])
+      {
+        console.log("clearing input");
+
+        inputContext.hot = -1;
+        inputContext.active = -1;
+        inputContext.mouseDown = false;
+        gameState.flags["clear_input"] = false;
+      }
     }
     else
     {
-      pushText("TOUCH TO START", screenCenterX, screenCenterY, { scale: 5, textAlign: Align.Center });
+      pushText("TOUCH TO START", screenCenterX, screenCenterY - 20, { scale: 5, textAlign: Align.Center });
     }
 
     gl_flush();
+
     // @ifdef DEBUG
     tickStats(delta, now);
     gl_flush();

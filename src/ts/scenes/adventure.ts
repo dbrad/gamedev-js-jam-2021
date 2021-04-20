@@ -1,15 +1,16 @@
 import { Align, pushQuad, pushSpriteAndSave } from "../draw";
-import { Currencies, gameState, LootType } from "../gamestate";
-import { inputContext } from "../input";
-import { createInterpolationData, Easing, interpolate, InterpolationData } from "../interpolate";
-import { addChildNode, createMovementButtonNode, createNode, createTextNode, createWindowNode, Direction, moveNode, node_children, node_enabled, node_size, node_sprite_timestamp, node_visible, updateTextNode } from "../node";
-import { screenWidth, screenHeight, screenCenterX, screenCenterY } from "../screen";
-import { v2 } from "../v2";
+import { Currencies, EventType, LootType, gameState } from "../gamestate";
+import { Direction, addChildNode, createMovementButtonNode, createNode, createTextNode, createWindowNode, moveNode, node_children, node_enabled, node_size, node_sprite_timestamp, node_visible, updateTextNode } from "../node";
+import { Easing, InterpolationData, createInterpolationData, interpolate } from "../interpolate";
 import { combat, prepareCombatScene } from "./combat";
+import { screenCenterX, screenCenterY, screenHeight, screenWidth } from "../screen";
+
+import { inputContext } from "../input";
+import { v2 } from "../v2";
 
 export let adventureRootId = -1;
 let sandAmountId = -1;
-let mirrorAmountId = -1;
+let glassAmountId = -1;
 let brassAmountId = -1;
 let steelAmountId = -1;
 let silverAmountId = -1;
@@ -25,7 +26,7 @@ let playerLERP: InterpolationData | null;
 
 const currencies: Currencies = {
   sand: 0,
-  mirrorFragments: 0,
+  glassFragments: 0,
   brassFragments: 0,
   steelFragments: 0,
   silverFragments: 0,
@@ -57,26 +58,37 @@ export function setupAdventureScene()
   const sideBar = createWindowNode([488, 34], [150, screenHeight - 34]);
   addChildNode(adventureRootId, sideBar);
 
-  const health = createTextNode("health");
-  moveNode(health, [4, 6]);
+  const health = createTextNode("health", 1, Align.Right);
+  moveNode(health, [60, 6]);
   addChildNode(topBar, health);
 
   const healthAmount = createTextNode("20/20", 1, Align.Right);
   moveNode(healthAmount, [120, 6]);
   addChildNode(topBar, healthAmount);
 
-  const stamina = createTextNode("stamina");
-  moveNode(stamina, [4, 16]);
+  const stamina = createTextNode("stamina", 1, Align.Right);
+  moveNode(stamina, [60, 16]);
   addChildNode(topBar, stamina);
 
   const staminaAmount = createTextNode("10/10", 1, Align.Right);
   moveNode(staminaAmount, [120, 16]);
   addChildNode(topBar, staminaAmount);
 
+  const sandLabelId = createTextNode("sand", 1, Align.Right);
+  moveNode(sandLabelId, [200, 6]);
+  addChildNode(topBar, sandLabelId);
+
   sandAmountId = createTextNode("0", 1, Align.Right);
-  moveNode(sandAmountId, [200, 6]);
+  moveNode(sandAmountId, [230, 6]);
   addChildNode(topBar, sandAmountId);
 
+  const glassLabelId = createTextNode("glass", 1, Align.Right);
+  moveNode(glassLabelId, [200, 16]);
+  addChildNode(topBar, glassLabelId);
+
+  glassAmountId = createTextNode("0", 1, Align.Right);
+  moveNode(glassAmountId, [230, 16]);
+  addChildNode(topBar, glassAmountId);
 
   directionUpId = createMovementButtonNode(Direction.Up);
   moveNode(directionUpId, [screenCenterX - 8, screenCenterY - 64]);
@@ -106,6 +118,18 @@ let game_mode = mode.Select;
 
 export function adventure(now: number, delta: number): void
 {
+  if (!gameState.currentEvent && !gameState.flags["tutorial_01"])
+  {
+    gameState.currentEvent = {
+      type: EventType.Dialog,
+      dialog: "I don't recongnize this place...      I should tread carefully.",
+      choices: null,
+      outcome: null
+    };
+    gameState.flags["tutorial_01"] = true;
+    gameState.flags["clear_input"] = true;
+  }
+
   animationTimer += delta;
   if (animationTimer > 500)
   {
@@ -140,6 +164,7 @@ export function adventure(now: number, delta: number): void
   }
 
   updateTextNode(sandAmountId, `${ currencies.sand }`);
+  updateTextNode(glassAmountId, `${ currencies.glassFragments }`);
 
   const cameraTopLeft: v2 = [camera[0] - cameraHalfW, camera[1] - cameraHalfH];
   const cameraBottomRight: v2 = [camera[0] + cameraHalfW, camera[1] + cameraHalfH];
@@ -307,7 +332,7 @@ export function adventure(now: number, delta: number): void
     {
       let target = [
         currencies.sand,
-        currencies.mirrorFragments,
+        currencies.glassFragments,
         currencies.brassFragments,
         currencies.steelFragments,
         currencies.silverFragments,
@@ -346,7 +371,7 @@ export function adventure(now: number, delta: number): void
       moneyLERP = createInterpolationData(750,
         [
           currencies.sand,
-          currencies.mirrorFragments,
+          currencies.glassFragments,
           currencies.brassFragments,
           currencies.steelFragments,
           currencies.silverFragments,
@@ -377,7 +402,7 @@ export function adventure(now: number, delta: number): void
     {
       let i = interpolate(now, moneyLERP);
       currencies.sand = Math.floor(i.values[0]);
-      currencies.mirrorFragments = Math.floor(i.values[1]);
+      currencies.glassFragments = Math.floor(i.values[1]);
       currencies.brassFragments = Math.floor(i.values[2]);
       currencies.steelFragments = Math.floor(i.values[3]);
       currencies.silverFragments = Math.floor(i.values[4]);

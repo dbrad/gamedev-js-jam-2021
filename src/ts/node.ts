@@ -1,10 +1,10 @@
 import { Align, parseText, pushQuad, pushSprite, pushSpriteAndSave, pushText, textHeight, textWidth } from "./draw";
 import { Easing, InterpolationData, createInterpolationData } from "./interpolate";
-import { cursor, inputContext, mouseDown } from "./input";
 import { gl_restore, gl_save, gl_translate } from "./gl";
 
 import { TEXTURE_CACHE } from "./texture";
 import { assert } from "./debug";
+import { inputContext } from "./input";
 import { v2 } from "./v2";
 
 //import { buttonHover, zzfxP } from "./zzfx";
@@ -116,7 +116,7 @@ export function nodeSize(nodeId: number): v2
   return [size[0] * scale, size[1] * scale];
 }
 
-export function nodeInput(nodeId: number, cursorPosition: number[] = cursor): void
+export function nodeInput(nodeId: number, cursorPosition: number[] = inputContext.cursor): void
 {
   if (!node_enabled[nodeId] || !node_interactive[nodeId]) return;
   const position = node_position[nodeId];
@@ -131,7 +131,7 @@ export function nodeInput(nodeId: number, cursorPosition: number[] = cursor): vo
     inputContext.hot = nodeId;
     if (inputContext.active === nodeId)
     {
-      if (!mouseDown)
+      if (!inputContext.mouseDown)
       {
         if (inputContext.hot === nodeId)
         {
@@ -142,8 +142,7 @@ export function nodeInput(nodeId: number, cursorPosition: number[] = cursor): vo
     }
     else if (inputContext.hot === nodeId)
     {
-
-      if (mouseDown)
+      if (inputContext.mouseDown)
       {
         inputContext.active = nodeId;
       }

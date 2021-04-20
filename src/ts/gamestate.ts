@@ -2,7 +2,7 @@ import { v2 } from "./v2"
 
 export type Currencies = {
   sand: number,
-  mirrorFragments: number,
+  glassFragments: number,
   brassFragments: number,
   steelFragments: number,
   silverFragments: number,
@@ -80,22 +80,22 @@ type Loot = {
   amount: number
 }
 
-type EventChoice = {
+export type EventChoice = {
   label: string,
   outcome: () => void
 }
-enum EventType
+export enum EventType
 {
   Dialog,
   Choice,
   Boon,
   Curse
 }
-type Event = {
+export type Event = {
   type: EventType,
   dialog: string,
   choices: EventChoice | null,
-  outcome: () => void | null
+  outcome: (() => void) | null
 }
 
 export type Room = {
@@ -121,7 +121,8 @@ type GameState = {
   currencies: Currencies,
   inventory: Item[],
   currentLevel: Level,
-  currentEvent: Event | null
+  currentEvent: Event | null,
+  flags: { [index: string]: boolean }
 }
 export const gameState: GameState = {
   player: {
@@ -145,7 +146,7 @@ export const gameState: GameState = {
   },
   currencies: {
     sand: 0,
-    mirrorFragments: 0,
+    glassFragments: 0,
     brassFragments: 0,
     steelFragments: 0,
     silverFragments: 0,
@@ -153,5 +154,9 @@ export const gameState: GameState = {
   },
   inventory: [],
   currentLevel: nullLevel,
-  currentEvent: null
+  currentEvent: null,
+  flags: {
+    "clear_input": false,
+    "tutorial_01": false
+  }
 }
