@@ -105,8 +105,6 @@ window.addEventListener(`load`, async () =>
 
       if (gameState.flags["clear_input"])
       {
-        console.log("clearing input");
-
         inputContext.hot = -1;
         inputContext.active = -1;
         inputContext.mouseDown = false;

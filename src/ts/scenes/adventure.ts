@@ -23,6 +23,7 @@ let directionRightId = -1;
 
 let cameraLERP: InterpolationData | null;
 let playerLERP: InterpolationData | null;
+let delayedTarget: v2 | null = null;
 
 const currencies: Currencies = {
   sand: 0,
@@ -122,8 +123,32 @@ export function adventure(now: number, delta: number): void
   {
     gameState.currentEvent = {
       type: EventType.Dialog,
-      dialog: "I don't recongnize this place...      I should tread carefully.",
-      choices: null,
+      dialog: "Don't you just hate when dialog systems don't give you a meaningful choice?",
+      dialogTime: 3000,
+      choices: [{
+        label: "no", outcome: () =>
+        {
+          gameState.currentEvent = {
+            type: EventType.Dialog,
+            dialog: "Yea me neither.",
+            dialogTime: 1000,
+            choices: [],
+            outcome: null
+          };
+        }
+      },
+      {
+        label: "nope", outcome: () =>
+        {
+          gameState.currentEvent = {
+            type: EventType.Dialog,
+            dialog: "Yea me neither.",
+            dialogTime: 1000,
+            choices: [],
+            outcome: null
+          };
+        }
+      }],
       outcome: null
     };
     gameState.flags["tutorial_01"] = true;
@@ -208,7 +233,7 @@ export function adventure(now: number, delta: number): void
 
         if (playerTileX == tileX && playerTileY == tileY)
         {
-          pushSpriteAndSave(`player_map_${ frame }`, renderX, renderY, 0xFFFFFFFF, 2, 2);
+
         }
 
         // Lighting
@@ -232,6 +257,12 @@ export function adventure(now: number, delta: number): void
       }
     }
   }
+
+  pushSpriteAndSave(
+    `player_map_${ frame }`,
+    gameState.currentLevel.playerPosition[0] - cameraTopLeft[0] - 8,
+    gameState.currentLevel.playerPosition[1] - cameraTopLeft[1] - 12,
+    0xFFFFFFFF, 2, 2);
 
   const renderX = playerRoomX * 11 * 16 + 5 * 16 - cameraTopLeft[0] - 8;
   const renderY = playerRoomY * 9 * 16 + 4 * 16 - cameraTopLeft[1] - 12;
@@ -278,23 +309,27 @@ export function adventure(now: number, delta: number): void
     node_enabled[directionRightId] = (gameState.currentLevel.tileMap[(playerTileY) * 110 + playerTileX + 11] || 0) > 0;
 
     let target: number[] | null = null;
-    if (inputContext.active === directionUpId)
+    if (inputContext.fire === directionUpId)
     {
-      target = [gameState.currentLevel.playerPosition[0], gameState.currentLevel.playerPosition[1] - 16 * 9];
+      target = [gameState.currentLevel.playerPosition[0], gameState.currentLevel.playerPosition[1] - 16 * 8];
+      delayedTarget = [gameState.currentLevel.playerPosition[0], gameState.currentLevel.playerPosition[1] - 16 * 9];
     }
-    else if (inputContext.active === directionDownId)
+    else if (inputContext.fire === directionDownId)
     {
-      target = [gameState.currentLevel.playerPosition[0], gameState.currentLevel.playerPosition[1] + 16 * 9];
+      target = [gameState.currentLevel.playerPosition[0], gameState.currentLevel.playerPosition[1] + 16 * 8];
+      delayedTarget = [gameState.currentLevel.playerPosition[0], gameState.currentLevel.playerPosition[1] + 16 * 9];
     }
-    else if (inputContext.active === directionLeftId)
+    else if (inputContext.fire === directionLeftId)
     {
-      target = [gameState.currentLevel.playerPosition[0] - 16 * 11, gameState.currentLevel.playerPosition[1]];
+      target = [gameState.currentLevel.playerPosition[0] - 16 * 10, gameState.currentLevel.playerPosition[1]];
+      delayedTarget = [gameState.currentLevel.playerPosition[0] - 16 * 11, gameState.currentLevel.playerPosition[1]];
     }
-    else if (inputContext.active === directionRightId)
+    else if (inputContext.fire === directionRightId)
     {
-      target = [gameState.currentLevel.playerPosition[0] + 16 * 11, gameState.currentLevel.playerPosition[1]];
+      target = [gameState.currentLevel.playerPosition[0] + 16 * 10, gameState.currentLevel.playerPosition[1]];
+      delayedTarget = [gameState.currentLevel.playerPosition[0] + 16 * 11, gameState.currentLevel.playerPosition[1]];
     }
-    if (target)
+    if (target && delayedTarget)
     {
       node_enabled[directionUpId] = false;
       node_sprite_timestamp[node_children[directionUpId][0]] = 0;
@@ -308,18 +343,22 @@ export function adventure(now: number, delta: number): void
       node_enabled[directionRightId] = false;
       node_sprite_timestamp[node_children[directionRightId][0]] = 0;
 
+      const targetRoom: v2 = [Math.floor(target[0] / 16 / 11), Math.floor(target[1] / 16 / 9)]
+      const room = gameState.currentLevel.rooms[targetRoom[1] * 10 + targetRoom[0]]
+      if (room?.loot.length === 0 && room?.enemies.length === 0 && room?.events.length === 0)
+      {
+        target = [...delayedTarget];
+        delayedTarget = null;
+      }
       cameraLERP = createInterpolationData(500, camera, target, Easing.EaseOutQuad);
       playerLERP = createInterpolationData(750, gameState.currentLevel.playerPosition, target, Easing.Linear, () =>
       {
         game_mode = mode.Triggers;
       });
-
       game_mode = mode.Move;
     }
   }
-  else if (game_mode === mode.Move)
-  {
-  }
+  else if (game_mode === mode.Move) { }
   else if (game_mode === mode.Triggers)
   {
     if (gameState.currentLevel.rooms[playerRoomIndex]?.enemies.length > 0)
@@ -381,14 +420,10 @@ export function adventure(now: number, delta: number): void
         Easing.Linear)
       game_mode = mode.Loot;
     }
-    else if (gameState.currentLevel.rooms[playerRoomIndex]?.events.length > 0)
+    else
     {
       gameState.currentEvent = gameState.currentLevel.rooms[playerRoomIndex]?.events.shift() ?? null;
       game_mode = mode.Events;
-    }
-    else
-    {
-      game_mode = mode.Select;
     }
   }
   else if (game_mode === mode.Combat)
@@ -416,6 +451,23 @@ export function adventure(now: number, delta: number): void
   }
   else if (game_mode === mode.Events)
   {
-    game_mode = mode.Select;
+    if (!gameState.currentEvent)
+    {
+      if (delayedTarget)
+      {
+        game_mode = mode.Move;
+
+        cameraLERP = createInterpolationData(250, camera, delayedTarget, Easing.EaseOutQuad);
+        playerLERP = createInterpolationData(300, gameState.currentLevel.playerPosition, delayedTarget, Easing.Linear, () =>
+        {
+          game_mode = mode.Select;
+        });
+        delayedTarget = null;
+      }
+      else
+      {
+        game_mode = mode.Select;
+      }
+    }
   }
 }

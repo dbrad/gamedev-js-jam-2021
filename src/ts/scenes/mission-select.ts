@@ -1,6 +1,7 @@
-import { assert } from "../debug";
-import { gameState, LootType, Room } from "../gamestate";
+import { LootType, Room, gameState } from "../gamestate";
 import { rand, shuffle } from "../random";
+
+import { assert } from "../debug";
 
 const base_room =
   [
@@ -312,6 +313,7 @@ function createCombatRoom(): Room
         maxHealth: 10,
         attack: 1,
         defense: 1,
+        attackSpeed: 105,
         abilities: null
       }
     ],

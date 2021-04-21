@@ -1,0 +1,12 @@
+Make a collection of reusable events to add to rooms
+Add some flag based tutorial/intro events
+
+Combat system!
+
+Crafting / Upgrade system (smithing)
+Mission select!
+Save file system
+  - Serialize the gamestate object minus the current level or event sections?
+
+Sounds effects!
+Muuuusic!!!
