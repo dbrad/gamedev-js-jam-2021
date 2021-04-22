@@ -1,3 +1,4 @@
+import { InterpolationData } from "./interpolate"
 import { v2 } from "./v2"
 
 export type Currencies = {
@@ -52,14 +53,15 @@ type Player = {
   xp: number,
   health: number,
   maxHealth: number,
-  stamina: number,
-  maxStamina: number,
+  sanity: number,
+  maxSanity: number,
   attack: number,
   defense: number,
   attackSpeed: number,
   mirror: Mirror
 }
 export type Enemy = {
+  alive: boolean,
   name: string,
   health: number,
   maxHealth: number,
@@ -105,15 +107,18 @@ export type Room = {
   seen: boolean,
   peeked: boolean,
   enemies: Enemy[],
+  exit: boolean,
   loot: Loot[],
   events: DialogEvent[]
 }
 type Level = {
+  difficulty: number,
   tileMap: Int8Array,
   playerPosition: v2,
   rooms: Room[],
 }
-export const nullLevel: Level = {
+const nullLevel: Level = {
+  difficulty: 0,
   tileMap: new Int8Array(),
   playerPosition: [0, 0],
   rooms: []
@@ -125,18 +130,19 @@ type GameState = {
   inventory: Item[],
   currentLevel: Level,
   currentEvent: DialogEvent | null,
+  transition: InterpolationData | null,
   flags: { [index: string]: boolean }
 }
 export const gameState: GameState = {
   player: {
     level: 1,
     xp: 0,
-    health: 10,
-    maxHealth: 10,
-    stamina: 10,
-    maxStamina: 10,
-    attack: 1,
-    defense: 1,
+    health: 20,
+    maxHealth: 20,
+    sanity: 10,
+    maxSanity: 10,
+    attack: 2,
+    defense: 2,
     attackSpeed: 100,
     mirror: {
       itemType: ItemType.Mirror,
@@ -160,7 +166,14 @@ export const gameState: GameState = {
   inventory: [],
   currentLevel: nullLevel,
   currentEvent: null,
+  transition: null,
   flags: {
+    "clear_3_star": false,
+    "clear_5_star": false,
+    "clear_7_star": false,
+    "clear_8_obs": false,
+    "clear_9_obs": false,
+    "clear_10_obs": false,
     "clear_input": false,
     "tutorial_01": false,
     "tutorial_02": false,

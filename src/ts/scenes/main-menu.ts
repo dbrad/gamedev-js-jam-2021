@@ -1,10 +1,10 @@
+import { Align, pushQuad } from "../draw";
 import { Scenes, setScene } from "../scene-manager";
 import { addChildNode, createButtonNode, createNode, createTextNode, moveNode, node_movement, node_position, node_size, node_visible } from "../node";
 import { screenCenterX, screenCenterY, screenHeight, screenWidth } from "../screen";
 
-import { Align, pushQuad } from "../draw";
-import { inputContext } from "../input";
 import { gameSetup } from "./mission-select";
+import { inputContext } from "../input";
 
 export let mainMenuRootId = -1;
 let mainMenuTitleTextId = -1;
@@ -51,7 +51,6 @@ export function mainMenuScene(now: number, delta: number): void
 {
   if (inputContext.fire === startGameTextId)
   {
-    gameSetup();
-    setScene(Scenes.Adventure);
+    setScene(Scenes.Camp);
   }
 }

@@ -1,12 +1,66 @@
-Make a collection of reusable events to add to rooms
-Add some flag based tutorial/intro events
+- Make a collection of reusable events to add to rooms
+- Add some flag based tutorial/intro events
 
-Combat system!
+- Better looting feedback
+- Add Abilities To Combat
+  - Gems for Player
+  - Special for bosses
+- Add Bosses
+- Add Exit
 
-Crafting / Upgrade system (smithing)
-Mission select!
-Save file system
+- Crafting / Upgrade system (smithing)
+  - Craft, level 2-4 with resources
+- Mission select!
+  - Maybe just do a list of buttons for now? progressive unlocks, 1-3 from start, 3 unlocks 4-5. 5 unlocks 6-7.
+  - 7 unlocks the obsidian mirror, that unlocks 8-10
+  - 1
+  - 2
+  - 3
+
+  - 1 2
+  - 3 4
+  -  5
+
+  - 1 2
+  - 3 4
+  - 5 6
+  -  7
+
+  - 1 6
+  - 2 7
+  - 3 8
+  - 4 9
+  - 5 10
+  
+  - 1. Envy - Green - Emeralds - Bonus XP
+  - 2. Greed - Yellow - Citrine - Bonus Loot
+  - 3. Lust - Pink - Morganite - Sac HP for Sanity
+  - 4. Gluttony - Orange - Fire Opal - Self Heal
+  - 5. Sloth - Blue - Sapphire - Summon Clones
+  - 6. Wrath - Red - Ruby - Swing twice per attack
+  - 7. Pride - Purple - Alexandrite - ???
+  - 8 - 10: Cycle through randomized deck of the 7 sins.
+- Save file system
   - Serialize the gamestate object minus the current level or event sections?
 
-Sounds effects!
-Muuuusic!!!
+- Sounds effects!
+- Muuuusic!!!
+
+- Brass     = Balanced Stats, Brass Tacks (Xp Bonus, 5, 10, 15, 20%)
+  - D => C => B => A for all stats
+
+- Steel     = High HP + High Def, Steel Body (5, 10, 15, 20% of def to attackers)
+  - C => B => A => S for HP and DEF
+  - E => D => C => B for other stats
+
+- Silver    = High Speed + High Attack, Quick Silver (Double Swing?)
+  - C => B => A => S for ATK Speed and ATK
+  - E => D => C => B for other stats
+
+- Gold      = High Stamina, Loot Bonus (5, 10, 15, 20%)
+  - C => B => A => S for Stamina
+  - D => C => B => A for other stats
+
+- Obsidian  = No Stamina, Balanced Stats, Threat Level +1
+  - D => C => B => A for all stats
+  - No Stamina Mechanic when equiped

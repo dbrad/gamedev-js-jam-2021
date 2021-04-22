@@ -1,4 +1,4 @@
-import { Align, pushText } from "./draw";
+import { Align, pushQuad, pushText } from "./draw";
 import { CurrentScene, Scenes } from "./scene-manager";
 import { adventure, setupAdventureScene } from "./scenes/adventure";
 import { campScene, setupCampScene } from "./scenes/camp";
@@ -9,11 +9,11 @@ import { mainMenuScene, setupMainMenuScene } from "./scenes/main-menu";
 import { moveNode, nodeInput, node_movement, renderNode } from "./node";
 import { screenCenterX, screenCenterY, screenHeight, screenWidth } from "./screen";
 
+import { colourToHex } from "./util";
 import { gameState } from "./gamestate";
 import { getSceneRootId } from "./scene";
 import { interpolate } from "./interpolate";
 import { loadAsset } from "./asset";
-import { setupCombatScene } from "./scenes/combat";
 import { tickStats } from "./stats";
 import { v2 } from "./v2";
 
@@ -45,7 +45,6 @@ window.addEventListener(`load`, async () =>
     setupMainMenuScene();
     setupCampScene();
     setupAdventureScene();
-    //setupCombatScene();
     setupDialogScene();
   };
   canvas.addEventListener("pointerdown", playGame);
@@ -71,13 +70,16 @@ window.addEventListener(`load`, async () =>
       }
       currentSceneRootId = getSceneRootId(CurrentScene);
 
-      if (gameState.currentEvent)
+      if (!gameState.transition)
       {
-        nodeInput(dialogSystemRootId)
-      }
-      else
-      {
-        nodeInput(currentSceneRootId)
+        if (gameState.currentEvent)
+        {
+          nodeInput(dialogSystemRootId)
+        }
+        else
+        {
+          nodeInput(currentSceneRootId)
+        }
       }
 
       switch (CurrentScene)
@@ -99,6 +101,13 @@ window.addEventListener(`load`, async () =>
       {
         dialogSystem(now, delta);
         renderNode(dialogSystemRootId, now, delta);
+      }
+
+      if (gameState.transition)
+      {
+        let i = interpolate(now, gameState.transition);
+        const colour = colourToHex(i.values[0], 0, 0, 0);
+        pushQuad(0, 0, screenWidth, screenHeight, colour);
       }
 
       inputContext.fire = -1;

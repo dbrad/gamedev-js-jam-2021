@@ -1,7 +1,25 @@
 import { LootType, Room, gameState } from "../gamestate";
+import { createNode, node_size, node_visible } from "../node";
 import { rand, shuffle } from "../random";
+import { screenHeight, screenWidth } from "../screen";
 
 import { assert } from "../debug";
+import { createBasicDialogEvent } from "./dialog";
+
+let missionSelectRootId = -1;
+
+export function setupMissionSelect()
+{
+  missionSelectRootId = createNode();
+  node_visible[missionSelectRootId] = false;
+  node_size[missionSelectRootId][0] = screenWidth;
+  node_size[missionSelectRootId][1] = screenHeight;
+}
+
+export function missionSelect(now: number, delta: number)
+{
+
+}
 
 const base_room =
   [
@@ -30,7 +48,8 @@ const tileMapHeight = 72;
 
 export function gameSetup(): void
 {
-  generateLevel(10);
+  const difficulty = 1;
+  generateLevel(difficulty);
 }
 
 function generateLevel(difficulty: number): void
@@ -176,15 +195,15 @@ function generateLevel(difficulty: number): void
     }
   }
   rooms[35] = createEmptyRoom();
+  rooms[35].seen = true;
 
   gameState.currentLevel = {
+    difficulty: difficulty,
     playerPosition: [60 * 16, 31 * 16],
     tileMap: tileMap,
     rooms: rooms
   };
-
 }
-
 
 function createRoomDeck(numberOfRooms: number, numberOfDeadEnds: number): Room[]
 {
@@ -225,7 +244,7 @@ function createRoomDeck(numberOfRooms: number, numberOfDeadEnds: number): Room[]
   const numberOfMoney = Math.max(0, Math.ceil((numberOfRoomsRemaining - numberOfCombat) * 0.6));
   for (let i = 0; i < numberOfMoney; i++)
   {
-    regularRooms.push(createBoonCurseRoom());
+    regularRooms.push(createMoneyRoom());
   }
 
   const numberOfTreasures = Math.max(0, numberOfRoomsRemaining - numberOfCombat - numberOfMoney);
@@ -248,6 +267,7 @@ function createEmptyRoom(): Room
     seen: false,
     peeked: false,
     enemies: [],
+    exit: false,
     loot: [],
     events: []
   }
@@ -258,7 +278,17 @@ function createBossRoom(): Room
   return {
     seen: false,
     peeked: false,
-    enemies: [],
+    enemies: [{
+      alive: true,
+      name: "goblin",
+      health: 10,
+      maxHealth: 10,
+      attack: 1,
+      defense: 1,
+      attackSpeed: 105,
+      abilities: null
+    }],
+    exit: true,
     loot: [
       { type: LootType.Sand, amount: 50 }
     ],
@@ -272,11 +302,13 @@ function createDialogRoom(): Room
     seen: false,
     peeked: false,
     enemies: [],
+    exit: false,
     loot: [],
-    events: []
+    events: [
+      createBasicDialogEvent("Wow something will happen here!")
+    ]
   }
 }
-
 
 function createChoiceRoom(): Room
 {
@@ -284,11 +316,13 @@ function createChoiceRoom(): Room
     seen: false,
     peeked: false,
     enemies: [],
+    exit: false,
     loot: [],
-    events: []
+    events: [
+      createBasicDialogEvent("Wow something will happen here!")
+    ]
   }
 }
-
 
 function createBoonCurseRoom(): Room
 {
@@ -296,8 +330,11 @@ function createBoonCurseRoom(): Room
     seen: false,
     peeked: false,
     enemies: [],
+    exit: false,
     loot: [],
-    events: []
+    events: [
+      createBasicDialogEvent("Wow something will happen here!")
+    ]
   }
 }
 
@@ -308,6 +345,7 @@ function createCombatRoom(): Room
     peeked: false,
     enemies: [
       {
+        alive: true,
         name: "goblin",
         health: 10,
         maxHealth: 10,
@@ -317,6 +355,7 @@ function createCombatRoom(): Room
         abilities: null
       }
     ],
+    exit: false,
     loot: [
       { type: LootType.Sand, amount: 10 }
     ],
@@ -330,18 +369,21 @@ function createMoneyRoom(): Room
     seen: false,
     peeked: false,
     enemies: [],
+    exit: false,
     loot: [
       { type: LootType.Sand, amount: 10 }
     ],
     events: []
   }
 }
+
 function createTresureRoom(): Room
 {
   return {
     seen: false,
     peeked: false,
     enemies: [],
+    exit: false,
     loot: [
       { type: LootType.Sand, amount: 10 }
     ],

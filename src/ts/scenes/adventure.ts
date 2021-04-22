@@ -2,13 +2,18 @@ import { Align, pushQuad, pushSpriteAndSave } from "../draw";
 import { Currencies, EventType, LootType, gameState } from "../gamestate";
 import { Direction, addChildNode, createMovementButtonNode, createNode, createTextNode, createWindowNode, moveNode, node_children, node_enabled, node_size, node_sprite_timestamp, node_visible, updateTextNode } from "../node";
 import { Easing, InterpolationData, createInterpolationData, interpolate } from "../interpolate";
-import { combat, prepareCombatScene } from "./combat";
+import { combat, combatRootId, prepareCombatScene, setupCombatScene } from "./combat";
 import { screenCenterX, screenCenterY, screenHeight, screenWidth } from "../screen";
 
 import { inputContext } from "../input";
 import { v2 } from "../v2";
 
 export let adventureRootId = -1;
+
+
+let healthAmountId = -1;
+let sanityAmountId = -1;
+
 let sandAmountId = -1;
 let glassAmountId = -1;
 let brassAmountId = -1;
@@ -20,6 +25,8 @@ let directionUpId = -1;
 let directionDownId = -1;
 let directionLeftId = -1;
 let directionRightId = -1;
+
+let combatWindow = -1;
 
 let cameraLERP: InterpolationData | null;
 let playerLERP: InterpolationData | null;
@@ -38,7 +45,7 @@ let moneyLERP: InterpolationData | null;
 
 enum mode
 {
-  Select,
+  Player,
   Move,
   Triggers,
   Combat,
@@ -59,21 +66,22 @@ export function setupAdventureScene()
   const sideBar = createWindowNode([488, 34], [150, screenHeight - 34]);
   addChildNode(adventureRootId, sideBar);
 
+
   const health = createTextNode("health", 1, Align.Right);
   moveNode(health, [60, 6]);
   addChildNode(topBar, health);
 
-  const healthAmount = createTextNode("20/20", 1, Align.Right);
-  moveNode(healthAmount, [120, 6]);
-  addChildNode(topBar, healthAmount);
+  healthAmountId = createTextNode("20/20", 1, Align.Right);
+  moveNode(healthAmountId, [120, 6]);
+  addChildNode(topBar, healthAmountId);
 
-  const stamina = createTextNode("stamina", 1, Align.Right);
-  moveNode(stamina, [60, 16]);
-  addChildNode(topBar, stamina);
+  const sanity = createTextNode("sanity", 1, Align.Right);
+  moveNode(sanity, [60, 16]);
+  addChildNode(topBar, sanity);
 
-  const staminaAmount = createTextNode("10/10", 1, Align.Right);
-  moveNode(staminaAmount, [120, 16]);
-  addChildNode(topBar, staminaAmount);
+  sanityAmountId = createTextNode("10/10", 1, Align.Right);
+  moveNode(sanityAmountId, [120, 16]);
+  addChildNode(topBar, sanityAmountId);
 
   const sandLabelId = createTextNode("sand", 1, Align.Right);
   moveNode(sandLabelId, [200, 6]);
@@ -91,6 +99,7 @@ export function setupAdventureScene()
   moveNode(glassAmountId, [230, 16]);
   addChildNode(topBar, glassAmountId);
 
+
   directionUpId = createMovementButtonNode(Direction.Up);
   moveNode(directionUpId, [screenCenterX - 8, screenCenterY - 64]);
   addChildNode(adventureRootId, directionUpId);
@@ -106,6 +115,12 @@ export function setupAdventureScene()
   directionLeftId = createMovementButtonNode(Direction.Left);
   moveNode(directionLeftId, [screenCenterX - 16 - 64, screenCenterY]);
   addChildNode(adventureRootId, directionLeftId);
+
+  setupCombatScene();
+  combatWindow = createWindowNode([20, 34], [screenWidth - 40, screenHeight - 68]);
+  addChildNode(adventureRootId, combatWindow);
+  addChildNode(combatWindow, combatRootId);
+  node_enabled[combatWindow] = false;
 }
 
 const camera: v2 = [60 * 16, 31 * 16];
@@ -115,45 +130,11 @@ const cameraHalfH = Math.floor(cameraSize[1] / 2);
 
 let animationTimer = 0;
 let frame = "01";
-let game_mode = mode.Select;
+let game_mode = mode.Player;
 
 export function adventure(now: number, delta: number): void
 {
-  if (!gameState.currentEvent && !gameState.flags["tutorial_01"])
-  {
-    gameState.currentEvent = {
-      type: EventType.Dialog,
-      dialog: "Don't you just hate when dialog systems don't give you a meaningful choice?",
-      dialogTime: 3000,
-      choices: [{
-        label: "no", outcome: () =>
-        {
-          gameState.currentEvent = {
-            type: EventType.Dialog,
-            dialog: "Yea me neither.",
-            dialogTime: 1000,
-            choices: [],
-            outcome: null
-          };
-        }
-      },
-      {
-        label: "nope", outcome: () =>
-        {
-          gameState.currentEvent = {
-            type: EventType.Dialog,
-            dialog: "Yea me neither.",
-            dialogTime: 1000,
-            choices: [],
-            outcome: null
-          };
-        }
-      }],
-      outcome: null
-    };
-    gameState.flags["tutorial_01"] = true;
-    gameState.flags["clear_input"] = true;
-  }
+  const player = gameState.player;
 
   animationTimer += delta;
   if (animationTimer > 500)
@@ -188,8 +169,11 @@ export function adventure(now: number, delta: number): void
     }
   }
 
-  updateTextNode(sandAmountId, `${ currencies.sand }`);
-  updateTextNode(glassAmountId, `${ currencies.glassFragments }`);
+  updateTextNode(healthAmountId, `${ player.health }/${ player.maxHealth }`, 1, Align.Right);
+  updateTextNode(sanityAmountId, `${ player.sanity }/${ player.maxSanity }`, 1, Align.Right);
+
+  updateTextNode(sandAmountId, `${ currencies.sand }`, 1, Align.Right);
+  updateTextNode(glassAmountId, `${ currencies.glassFragments }`, 1, Align.Right);
 
   const cameraTopLeft: v2 = [camera[0] - cameraHalfW, camera[1] - cameraHalfH];
   const cameraBottomRight: v2 = [camera[0] + cameraHalfW, camera[1] + cameraHalfH];
@@ -201,12 +185,20 @@ export function adventure(now: number, delta: number): void
   const playerRoomY = Math.floor(playerTileY / 9);
 
   const playerRoomIndex = playerRoomY * 10 + playerRoomX;
-  if (gameState.currentLevel.rooms[playerRoomIndex]) gameState.currentLevel.rooms[playerRoomIndex].seen = true;
+  if (gameState.currentLevel.rooms[playerRoomIndex])
+  {
+    if (!gameState.currentLevel.rooms[playerRoomIndex].seen)
+    {
+      player.sanity -= 1;
+    }
+    gameState.currentLevel.rooms[playerRoomIndex].seen = true;
+  }
   if (gameState.currentLevel.rooms[playerRoomIndex + 10]) gameState.currentLevel.rooms[playerRoomIndex + 10].peeked = true;
   if (gameState.currentLevel.rooms[playerRoomIndex - 10]) gameState.currentLevel.rooms[playerRoomIndex - 10].peeked = true;
   if (gameState.currentLevel.rooms[playerRoomIndex + 1]) gameState.currentLevel.rooms[playerRoomIndex + 1].peeked = true;
   if (gameState.currentLevel.rooms[playerRoomIndex - 1]) gameState.currentLevel.rooms[playerRoomIndex - 1].peeked = true;
 
+  //#region MAP RENDER
   for (let y = cameraTopLeft[1]; y <= cameraBottomRight[1]; y += 16)
   {
     for (let x = cameraTopLeft[0]; x <= cameraBottomRight[0]; x += 16)
@@ -297,11 +289,26 @@ export function adventure(now: number, delta: number): void
       else if (gameState.currentLevel.rooms[y * 10 + x]?.peeked)
       {
         pushQuad(x * 18 + 1, y * 18 + 1 + 200, 16, 16, 0xFF333333);
+
+        if (gameState.currentLevel.rooms[y * 10 + x]?.exit)
+        {
+          pushSpriteAndSave("map_mirror", x * 18 + 5, y * 18 + 5 + 200);
+        }
+        else if (gameState.currentLevel.rooms[y * 10 + x]?.enemies.length > 0)
+        {
+          pushSpriteAndSave("map_skull", x * 18 + 6, y * 18 + 6 + 200);
+        }
+        else if (gameState.currentLevel.rooms[y * 10 + x]?.events.length > 0)
+        {
+          pushSpriteAndSave("map_bang", x * 18 + 5, y * 18 + 5 + 200);
+        }
       }
     }
   }
+  //#endregion MAP RENDER
 
-  if (game_mode === mode.Select)
+
+  if (game_mode === mode.Player)
   {
     node_enabled[directionUpId] = (gameState.currentLevel.tileMap[(playerTileY - 9) * 110 + playerTileX] || 0) > 0;
     node_enabled[directionDownId] = (gameState.currentLevel.tileMap[(playerTileY + 9) * 110 + playerTileX] || 0) > 0;
@@ -350,7 +357,7 @@ export function adventure(now: number, delta: number): void
         target = [...delayedTarget];
         delayedTarget = null;
       }
-      cameraLERP = createInterpolationData(500, camera, target, Easing.EaseOutQuad);
+      cameraLERP = createInterpolationData(500, camera, delayedTarget ?? target, Easing.EaseOutQuad);
       playerLERP = createInterpolationData(750, gameState.currentLevel.playerPosition, target, Easing.Linear, () =>
       {
         game_mode = mode.Triggers;
@@ -363,7 +370,7 @@ export function adventure(now: number, delta: number): void
   {
     if (gameState.currentLevel.rooms[playerRoomIndex]?.enemies.length > 0)
     {
-      prepareCombatScene(gameState.currentLevel.rooms[playerRoomIndex]?.enemies);
+      prepareCombatScene([...gameState.currentLevel.rooms[playerRoomIndex].enemies]);
       gameState.currentLevel.rooms[playerRoomIndex].enemies.length = 0;
       game_mode = mode.Combat;
     }
@@ -428,8 +435,13 @@ export function adventure(now: number, delta: number): void
   }
   else if (game_mode === mode.Combat)
   {
-    combat(now, delta);
-    game_mode = mode.Triggers;
+    node_enabled[combatWindow] = true;
+
+    if (!combat(now, delta))
+    {
+      game_mode = mode.Triggers;
+      node_enabled[combatWindow] = false;
+    }
   }
   else if (game_mode === mode.Loot)
   {
@@ -457,16 +469,16 @@ export function adventure(now: number, delta: number): void
       {
         game_mode = mode.Move;
 
-        cameraLERP = createInterpolationData(250, camera, delayedTarget, Easing.EaseOutQuad);
-        playerLERP = createInterpolationData(300, gameState.currentLevel.playerPosition, delayedTarget, Easing.Linear, () =>
+        //cameraLERP = createInterpolationData(150, camera, delayedTarget, Easing.EaseOutQuad);
+        playerLERP = createInterpolationData(200, gameState.currentLevel.playerPosition, delayedTarget, Easing.Linear, () =>
         {
-          game_mode = mode.Select;
+          game_mode = mode.Player;
         });
         delayedTarget = null;
       }
       else
       {
-        game_mode = mode.Select;
+        game_mode = mode.Player;
       }
     }
   }

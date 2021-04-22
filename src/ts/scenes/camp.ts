@@ -1,8 +1,17 @@
 import { Align, pushQuad, pushSpriteAndSave, pushText } from "../draw";
+import { Scenes, setScene } from "../scene-manager";
 import { addChildNode, createButtonNode, createNode, createSprite, createTextNode, createWindowNode, moveNode, node_size, node_visible } from "../node";
 import { screenCenterX, screenHeight, screenWidth } from "../screen";
 
+import { gameSetup } from "./mission-select";
+import { inputContext } from "../input";
+
 export let campRootId = -1;
+let option01 = -1;
+let option02 = -1;
+let option03 = -1;
+let option04 = -1;
+
 export function setupCampScene(): void
 {
   campRootId = createNode();
@@ -44,19 +53,17 @@ export function setupCampScene(): void
   moveNode(moon, [16, 16]);
   addChildNode(campRootId, moon);
 
-  const window = createWindowNode([420, 4], [206, 352]);
+  const window = createWindowNode([420, 4], [186, 352]);
   addChildNode(campRootId, window);
 
-  const option01 = createButtonNode("upgrade", [8, 8], [190, 40]);
+  option01 = createButtonNode("depart", [8, 8], [170, 70]);
   addChildNode(window, option01);
-  const option02 = createButtonNode("depart", [8, 68], [190, 40]);
+  option02 = createButtonNode("craft", [8, 98], [170, 70]);
   addChildNode(window, option02);
-  const option03 = createButtonNode("status", [8, 128], [190, 40]);
+  option03 = createButtonNode("upgrade", [8, 188], [170, 70]);
   addChildNode(window, option03);
-  const option04 = createButtonNode("inventory", [8, 188], [190, 40]);
+  option04 = createButtonNode("quit", [8, 304], [170, 40]);
   addChildNode(window, option04);
-  const option05 = createButtonNode("save + quit", [8, 304], [190, 40]);
-  addChildNode(window, option05);
 }
 
 export function campScene(): void
@@ -70,4 +77,11 @@ export function campScene(): void
   {
     pushSpriteAndSave(`grass_0${ i % 3 + 1 }`, i * 16, 232);
   }
+
+  if (inputContext.fire === option01)
+  {
+    gameSetup();
+    setScene(Scenes.Adventure);
+  }
+
 }
