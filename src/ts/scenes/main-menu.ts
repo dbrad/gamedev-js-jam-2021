@@ -1,9 +1,8 @@
-import { Align, pushQuad } from "../draw";
 import { Scenes, setScene } from "../scene-manager";
-import { addChildNode, createButtonNode, createNode, createTextNode, moveNode, node_movement, node_position, node_size, node_visible } from "../node";
+import { addChildNode, createButtonNode, createNode, createTextNode, node_position, node_size, node_visible } from "../node";
 import { screenCenterX, screenCenterY, screenHeight, screenWidth } from "../screen";
 
-import { gameSetup } from "./mission-select";
+import { Align } from "../draw";
 import { inputContext } from "../input";
 
 export let mainMenuRootId = -1;
@@ -32,21 +31,6 @@ export function setupMainMenuScene(): void
   options.push(continueGameTextId);
 }
 
-export function mainMenuTransitionIn(): Promise<void>
-{
-  return new Promise((resolve) =>
-  {
-    resolve();
-  });
-}
-
-export function mainMenuTransitionOut(): Promise<void>
-{
-  return new Promise((resolve) =>
-  {
-    resolve();
-  });
-}
 export function mainMenuScene(now: number, delta: number): void
 {
   if (inputContext.fire === startGameTextId)

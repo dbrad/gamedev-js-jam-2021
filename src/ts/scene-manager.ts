@@ -7,6 +7,7 @@ export const enum Scenes
   MainMenu,
   Camp,
   Adventure,
+  MissionSelect
 }
 
 export let CurrentScene: Scenes = Scenes.MainMenu;

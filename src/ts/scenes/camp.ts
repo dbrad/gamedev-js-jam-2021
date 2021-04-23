@@ -1,9 +1,9 @@
-import { Align, pushQuad, pushSpriteAndSave, pushText } from "../draw";
 import { Scenes, setScene } from "../scene-manager";
-import { addChildNode, createButtonNode, createNode, createSprite, createTextNode, createWindowNode, moveNode, node_size, node_visible } from "../node";
+import { addChildNode, createButtonNode, createNode, createSprite, createWindowNode, moveNode, node_size, node_visible } from "../node";
+import { pushQuad, pushSpriteAndSave } from "../draw";
 import { screenCenterX, screenHeight, screenWidth } from "../screen";
 
-import { gameSetup } from "./mission-select";
+import { arrangeMissionSelect } from "./mission-select";
 import { inputContext } from "../input";
 
 export let campRootId = -1;
@@ -80,8 +80,10 @@ export function campScene(): void
 
   if (inputContext.fire === option01)
   {
-    gameSetup();
-    setScene(Scenes.Adventure);
+    // gameSetup();
+    // setScene(Scenes.Adventure);
+    arrangeMissionSelect();
+    setScene(Scenes.MissionSelect);
   }
 
 }

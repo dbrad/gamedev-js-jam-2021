@@ -52,6 +52,11 @@ export function dialogSystem(now: number, delta: number): void
         {
           gameState.currentEvent.outcome();
         }
+        dialogTime = -1;
+        textTimer = -1;
+        done = false;
+        node_enabled[choiceWindowId] = false;
+        gameState.flags["clear_input"] = true;
         gameState.currentEvent = null;
         return;
       }
@@ -77,6 +82,7 @@ export function dialogSystem(now: number, delta: number): void
         if (outcome)
         {
           dialogTime = -1;
+          textTimer = -1;
           done = false;
           node_enabled[choiceWindowId] = false;
           gameState.flags["clear_input"] = true;

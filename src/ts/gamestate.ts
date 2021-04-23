@@ -182,3 +182,29 @@ export const gameState: GameState = {
     "tutorial_05": false,
   }
 }
+
+export function resetPlayer(): void
+{
+  gameState.player.xp = 0;
+  gameState.player.level = 1;
+  gameState.player.health = gameState.player.maxHealth;
+  gameState.player.sanity = gameState.player.maxSanity;
+  gameState.player.attackSpeed = 100;
+  gameState.player.attack = 2;
+  gameState.player.defense = 2;
+}
+
+export function levelUpPlayer(): void
+{
+  const player = gameState.player;
+  while (player.xp >= nextLevel(player.level))
+  {
+    player.level++;
+    // TODO(dbrad): mirror based stat scaling
+  }
+}
+
+export function nextLevel(level: number): number
+{
+  return Math.round(0.04 * (level ** 3) + 0.8 * (level ** 2) + 2 * level)
+}

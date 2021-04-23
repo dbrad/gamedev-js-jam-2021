@@ -1,24 +1,169 @@
-import { LootType, Room, gameState } from "../gamestate";
-import { createNode, node_size, node_visible } from "../node";
+import { LootType, Room, gameState, resetPlayer } from "../gamestate";
+import { Scenes, setScene } from "../scene-manager";
+import { addChildNode, createButtonNode, createNode, moveNode, node_enabled, node_size, node_visible } from "../node";
 import { rand, shuffle } from "../random";
 import { screenHeight, screenWidth } from "../screen";
 
 import { assert } from "../debug";
 import { createBasicDialogEvent } from "./dialog";
+import { inputContext } from "../input";
+import { resetAdventureScene } from "./adventure";
 
-let missionSelectRootId = -1;
+export let missionSelectRootId = -1;
 
-export function setupMissionSelect()
+let select1StarId = -1;
+let select2StarId = -1;
+let select3StarId = -1;
+let select4StarId = -1;
+let select5StarId = -1;
+let select6StarId = -1;
+let select7StarId = -1;
+let select8StarId = -1;
+let select9StarId = -1;
+let select10StarId = -1;
+
+let backButtonId = -1;
+
+export function setupMissionSelect(): void
 {
   missionSelectRootId = createNode();
   node_visible[missionSelectRootId] = false;
   node_size[missionSelectRootId][0] = screenWidth;
   node_size[missionSelectRootId][1] = screenHeight;
+
+  select1StarId = createButtonNode("Envy's Lookout", [0, 0], [200, 70]);
+  addChildNode(missionSelectRootId, select1StarId);
+
+  select2StarId = createButtonNode("Greed's Horde", [0, 0], [200, 70]);
+  addChildNode(missionSelectRootId, select2StarId);
+
+  select3StarId = createButtonNode("Lust's Den", [0, 0], [200, 70]);
+  addChildNode(missionSelectRootId, select3StarId);
+
+  select4StarId = createButtonNode("Gluttony's Cellar", [0, 0], [200, 70]);
+  addChildNode(missionSelectRootId, select4StarId);
+
+  select5StarId = createButtonNode("Sloth's Haunt", [0, 0], [200, 70]);
+  addChildNode(missionSelectRootId, select5StarId);
+
+  select6StarId = createButtonNode("Wrath's Lair", [0, 0], [200, 70]);
+  addChildNode(missionSelectRootId, select6StarId);
+
+  select7StarId = createButtonNode("Pride's Hall", [0, 0], [200, 70]);
+  addChildNode(missionSelectRootId, select7StarId);
+
+  select8StarId = createButtonNode("???", [0, 0], [200, 70]);
+  addChildNode(missionSelectRootId, select8StarId);
+
+  select9StarId = createButtonNode("???", [0, 0], [200, 70]);
+  addChildNode(missionSelectRootId, select9StarId);
+
+  select10StarId = createButtonNode("???", [0, 0], [200, 70]);
+  addChildNode(missionSelectRootId, select10StarId);
+
+  backButtonId = createButtonNode("back", [0, 0], [70, 40]);
+  addChildNode(missionSelectRootId, backButtonId);
 }
 
-export function missionSelect(now: number, delta: number)
+export function arrangeMissionSelect(): void
 {
+  if (gameState.flags["clear_7_star"])
+  {
+    node_enabled[select4StarId] = true;
+    node_enabled[select5StarId] = true;
+    node_enabled[select6StarId] = true;
+    node_enabled[select7StarId] = true;
+    node_enabled[select8StarId] = true;
+    node_enabled[select9StarId] = true;
+    node_enabled[select10StarId] = true;
+  }
+  else if (gameState.flags["clear_5_star"])
+  {
+    node_enabled[select4StarId] = true;
+    node_enabled[select5StarId] = true;
+    node_enabled[select6StarId] = true;
+    node_enabled[select7StarId] = true;
+    node_enabled[select8StarId] = false;
+    node_enabled[select9StarId] = false;
+    node_enabled[select10StarId] = false;
+  }
+  else if (gameState.flags["clear_3_star"])
+  {
+    node_enabled[select4StarId] = true;
+    node_enabled[select5StarId] = true;
+    node_enabled[select6StarId] = false;
+    node_enabled[select7StarId] = false;
+    node_enabled[select8StarId] = false;
+    node_enabled[select9StarId] = false;
+    node_enabled[select10StarId] = false;
+  }
+  else
+  {
+    moveNode(select1StarId, [195, 65]);
+    node_size[select1StarId] = [250, 70];
 
+    moveNode(select2StarId, [195, 145]);
+    node_size[select2StarId] = [250, 70];
+
+    moveNode(select3StarId, [195, 225]);
+    node_size[select3StarId] = [250, 70];
+
+    node_enabled[select4StarId] = false;
+    node_enabled[select5StarId] = false;
+    node_enabled[select6StarId] = false;
+    node_enabled[select7StarId] = false;
+    node_enabled[select8StarId] = false;
+    node_enabled[select9StarId] = false;
+    node_enabled[select10StarId] = false;
+  }
+}
+
+export function missionSelect(now: number, delta: number): void
+{
+  let difficulty = 0;
+  switch (inputContext.fire)
+  {
+    case backButtonId:
+      setScene(Scenes.Camp);
+      return;
+    case select1StarId:
+      difficulty = 1;
+      break;
+    case select2StarId:
+      difficulty = 2;
+      break;
+    case select3StarId:
+      difficulty = 3;
+      break;
+    case select4StarId:
+      difficulty = 4;
+      break;
+    case select5StarId:
+      difficulty = 5;
+      break;
+    case select6StarId:
+      difficulty = 6;
+      break;
+    case select7StarId:
+      difficulty = 7;
+      break;
+    case select8StarId:
+      difficulty = 8;
+      break;
+    case select9StarId:
+      difficulty = 9;
+      break;
+    case select10StarId:
+      difficulty = 10;
+      break;
+  }
+  if (difficulty > 0)
+  {
+    generateLevel(difficulty);
+    resetAdventureScene();
+    resetPlayer();
+    setScene(Scenes.Adventure);
+  }
 }
 
 const base_room =
@@ -45,12 +190,6 @@ const roomWidth = 11;
 const roomHeight = 9;
 const tileMapWidth = 110;
 const tileMapHeight = 72;
-
-export function gameSetup(): void
-{
-  const difficulty = 1;
-  generateLevel(difficulty);
-}
 
 function generateLevel(difficulty: number): void
 {

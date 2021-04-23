@@ -6,6 +6,7 @@ import { dialogSystem, dialogSystemRootId, setupDialogScene } from "./scenes/dia
 import { gl_clear, gl_flush, gl_getContext, gl_init, gl_setClear } from "./gl"
 import { initializeInput, inputContext } from "./input";
 import { mainMenuScene, setupMainMenuScene } from "./scenes/main-menu";
+import { missionSelect, setupMissionSelect } from "./scenes/mission-select";
 import { moveNode, nodeInput, node_movement, renderNode } from "./node";
 import { screenCenterX, screenCenterY, screenHeight, screenWidth } from "./screen";
 
@@ -44,6 +45,7 @@ window.addEventListener(`load`, async () =>
 
     setupMainMenuScene();
     setupCampScene();
+    setupMissionSelect();
     setupAdventureScene();
     setupDialogScene();
   };
@@ -92,6 +94,9 @@ window.addEventListener(`load`, async () =>
           break;
         case Scenes.Adventure:
           adventure(now, delta);
+          break;
+        case Scenes.MissionSelect:
+          missionSelect(now, delta);
           break;
       }
 

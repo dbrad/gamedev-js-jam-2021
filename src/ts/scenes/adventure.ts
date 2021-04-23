@@ -1,15 +1,29 @@
 import { Align, pushQuad, pushSpriteAndSave } from "../draw";
 import { Currencies, EventType, LootType, gameState } from "../gamestate";
-import { Direction, addChildNode, createMovementButtonNode, createNode, createTextNode, createWindowNode, moveNode, node_children, node_enabled, node_size, node_sprite_timestamp, node_visible, updateTextNode } from "../node";
+import { Direction, addChildNode, createButtonNode, createMovementButtonNode, createNode, createTextNode, createWindowNode, moveNode, node_children, node_enabled, node_size, node_sprite_timestamp, node_text, node_visible, updateTextNode } from "../node";
 import { Easing, InterpolationData, createInterpolationData, interpolate } from "../interpolate";
+import { Scenes, setScene } from "../scene-manager";
 import { combat, combatRootId, prepareCombatScene, setupCombatScene } from "./combat";
+import { createChoiceDialogEvent, createEventChoice } from "./dialog";
 import { screenCenterX, screenCenterY, screenHeight, screenWidth } from "../screen";
 
 import { inputContext } from "../input";
 import { v2 } from "../v2";
 
+enum mode
+{
+  Player,
+  Move,
+  Triggers,
+  Combat,
+  Loot,
+  Events,
+}
+
 export let adventureRootId = -1;
 
+let restButton = -1;
+let leaveButton = -1;
 
 let healthAmountId = -1;
 let sanityAmountId = -1;
@@ -31,6 +45,7 @@ let combatWindow = -1;
 let cameraLERP: InterpolationData | null;
 let playerLERP: InterpolationData | null;
 let delayedTarget: v2 | null = null;
+let moneyLERP: InterpolationData | null;
 
 const currencies: Currencies = {
   sand: 0,
@@ -41,17 +56,14 @@ const currencies: Currencies = {
   goldFragments: 0,
 };
 
-let moneyLERP: InterpolationData | null;
+const camera: v2 = [60 * 16, 31 * 16];
+const cameraSize: v2 = [41 * 16, 25 * 16];
+const cameraHalfW = Math.floor(cameraSize[0] / 2);
+const cameraHalfH = Math.floor(cameraSize[1] / 2);
 
-enum mode
-{
-  Player,
-  Move,
-  Triggers,
-  Combat,
-  Loot,
-  Events,
-}
+let animationTimer = 0;
+let frame = "01";
+let game_mode = mode.Player;
 
 export function setupAdventureScene()
 {
@@ -60,12 +72,18 @@ export function setupAdventureScene()
   node_size[adventureRootId][0] = screenWidth;
   node_size[adventureRootId][1] = screenHeight;
 
-  const topBar = createWindowNode([2, 2], [screenWidth - 4, 30]);
-  addChildNode(adventureRootId, topBar);
-
   const sideBar = createWindowNode([488, 34], [150, screenHeight - 34]);
   addChildNode(adventureRootId, sideBar);
 
+  restButton = createButtonNode("rest", [4, 4], [142, 70]);
+  addChildNode(sideBar, restButton);
+
+  leaveButton = createButtonNode("retreat", [4, screenHeight - 34 - 70 - 4], [142, 70]);
+  addChildNode(sideBar, leaveButton);
+
+
+  const topBar = createWindowNode([2, 2], [screenWidth - 4, 30]);
+  addChildNode(adventureRootId, topBar);
 
   const health = createTextNode("health", 1, Align.Right);
   moveNode(health, [60, 6]);
@@ -123,14 +141,27 @@ export function setupAdventureScene()
   node_enabled[combatWindow] = false;
 }
 
-const camera: v2 = [60 * 16, 31 * 16];
-const cameraSize: v2 = [41 * 16, 25 * 16];
-const cameraHalfW = Math.floor(cameraSize[0] / 2);
-const cameraHalfH = Math.floor(cameraSize[1] / 2);
+export function resetAdventureScene(): void
+{
+  camera[0] = 60 * 16;
+  camera[1] = 31 * 16;
 
-let animationTimer = 0;
-let frame = "01";
-let game_mode = mode.Player;
+  currencies.sand = 0;
+  currencies.glassFragments = 0;
+  currencies.brassFragments = 0;
+  currencies.steelFragments = 0;
+  currencies.silverFragments = 0;
+  currencies.goldFragments = 0;
+
+  animationTimer = 1;
+  frame = "01";
+
+  cameraLERP = null;
+  playerLERP = null;
+  delayedTarget = null;
+  moneyLERP = null;
+  game_mode = mode.Player;
+}
 
 export function adventure(now: number, delta: number): void
 {
@@ -307,13 +338,67 @@ export function adventure(now: number, delta: number): void
   }
   //#endregion MAP RENDER
 
+  if (gameState.currentLevel.rooms[playerRoomIndex].exit)
+  {
+    node_text[leaveButton] = "leave";
+  }
+  else
+  {
+    node_text[leaveButton] = "retreat";
+  }
+
+  const sane = player.sanity > 0;
+
+  node_enabled[restButton] = sane
 
   if (game_mode === mode.Player)
   {
-    node_enabled[directionUpId] = (gameState.currentLevel.tileMap[(playerTileY - 9) * 110 + playerTileX] || 0) > 0;
-    node_enabled[directionDownId] = (gameState.currentLevel.tileMap[(playerTileY + 9) * 110 + playerTileX] || 0) > 0;
-    node_enabled[directionLeftId] = (gameState.currentLevel.tileMap[(playerTileY) * 110 + playerTileX - 11] || 0) > 0;
-    node_enabled[directionRightId] = (gameState.currentLevel.tileMap[(playerTileY) * 110 + playerTileX + 11] || 0) > 0;
+    if (inputContext.fire === restButton)
+    {
+
+    }
+    else if (inputContext.fire === leaveButton)
+    {
+      if (gameState.currentLevel.rooms[playerRoomIndex].exit)
+      {
+        const yes = createEventChoice("yes", () =>
+        {
+          gameState.currencies.sand += Math.ceil(currencies.sand);
+          gameState.currencies.glassFragments += Math.ceil(currencies.glassFragments);
+          gameState.currencies.brassFragments += Math.ceil(currencies.brassFragments);
+          gameState.currencies.steelFragments += Math.ceil(currencies.steelFragments);
+          gameState.currencies.silverFragments += Math.ceil(currencies.silverFragments);
+          gameState.currencies.goldFragments += Math.ceil(currencies.goldFragments);
+
+          setScene(Scenes.Camp);
+          // game_mode = mode.Exit;
+        });
+        const no = createEventChoice("no", () => { });
+        gameState.currentEvent = createChoiceDialogEvent([yes, no], "Exit the dungeon with all of your findings?", 1000);
+      }
+      else
+      {
+        const yes = createEventChoice("yes", () =>
+        {
+          gameState.currencies.sand += Math.ceil(currencies.sand * 0.5);
+          gameState.currencies.glassFragments += Math.ceil(currencies.glassFragments * 0.5);
+          gameState.currencies.brassFragments += Math.ceil(currencies.brassFragments * 0.5);
+          gameState.currencies.steelFragments += Math.ceil(currencies.steelFragments * 0.5);
+          gameState.currencies.silverFragments += Math.ceil(currencies.silverFragments * 0.5);
+          gameState.currencies.goldFragments += Math.ceil(currencies.goldFragments * 0.5);
+
+          setScene(Scenes.Camp);
+          // game_mode = mode.Exit;
+        });
+        const no = createEventChoice("no", () => { });
+        gameState.currentEvent = createChoiceDialogEvent([yes, no], "Retreat from the dungeon and lose 50% of what you've found?", 1000);
+      }
+    }
+
+    node_enabled[directionUpId] = sane && (gameState.currentLevel.tileMap[(playerTileY - 9) * 110 + playerTileX] || 0) > 0;
+    node_enabled[directionDownId] = sane && (gameState.currentLevel.tileMap[(playerTileY + 9) * 110 + playerTileX] || 0) > 0;
+    node_enabled[directionLeftId] = sane && (gameState.currentLevel.tileMap[(playerTileY) * 110 + playerTileX - 11] || 0) > 0;
+    node_enabled[directionRightId] = sane && (gameState.currentLevel.tileMap[(playerTileY) * 110 + playerTileX + 11] || 0) > 0;
 
     let target: number[] | null = null;
     if (inputContext.fire === directionUpId)
@@ -469,7 +554,6 @@ export function adventure(now: number, delta: number): void
       {
         game_mode = mode.Move;
 
-        //cameraLERP = createInterpolationData(150, camera, delayedTarget, Easing.EaseOutQuad);
         playerLERP = createInterpolationData(200, gameState.currentLevel.playerPosition, delayedTarget, Easing.Linear, () =>
         {
           game_mode = mode.Player;
