@@ -1,17 +1,22 @@
 - Make a collection of reusable events to add to rooms
 - Add some flag based tutorial/intro events
+- Level gen
+  - Store colours for level
+  - Add boss abilities
+  - Add other loot types to rooms
+
+- Leveling and xp
+- Stat scaling
 
 - 2 line of text button
 
-- Better looting feedback
 - Add Abilities To Combat
   - Gems for Player
   - Special for bosses
-- Add Bosses
-- Add Exit
 
 - Crafting / Upgrade system (smithing)
   - Craft, level 2-4 with resources
+
 - Mission select!
   - Maybe just do a list of buttons for now? progressive unlocks, 1-3 from start, 3 unlocks 4-5. 5 unlocks 6-7.
   - 7 unlocks the obsidian mirror, that unlocks 8-10
@@ -34,7 +39,7 @@
   - 4 9
   - 5 10
   
-  - 1. Envy - Green - Emeralds - Bonus XP
+  - 1. Envy - Green - Emerald - Bonus XP
   - 2. Greed - Yellow - Citrine - Bonus Loot
   - 3. Lust - Pink - Morganite - Sac HP for Sanity
   - 4. Gluttony - Orange - Fire Opal - Self Heal
@@ -42,11 +47,40 @@
   - 6. Wrath - Red - Ruby - Swing twice per attack
   - 7. Pride - Purple - Alexandrite - ???
   - 8 - 10: Cycle through randomized deck of the 7 sins.
+
+- Mirror / Gem Select
+
+- Gems for Abilities
+  - Envy's Emerald - Bonus XP (5%, 10%, 15%, 20%)
+  - Greed's Citrine - Bonus Loot (5%, 10%, 15%, 20%)
+  - Lust's Morganite - Ability to Give up HP for Sanity on Map (25% => 1, 20% => 1, 15% => 1, 10% => 1)
+  - Gluttony's Fire Opal - Periodically Self-Heal 5% during combat (Shorter cooldown 2500, 2000, 1500, 1000)
+  - Sloth's Sapphire - Periodically summons Decoys during combat (Shorter cooldown 4000, 3500, 3000, 2500)
+  - Wrath's Ruby - Double Attack on next attack when ready (Shorter cooldown 3000, 2500, 2000, 1500)
+  - Pride's Alexandrite - Reveal random rooms at start of level? (3, 5, 7, 9)
+
+- Boss Abilties
+  - Envy - Copy - Copies an ability until the next cast of this.
+  - Greed - Steal - Steals 10% of 1 of your loots on cooldown, you get it back if you beat him.
+  - Lust - Pacify - Resets all player counters to 0
+  - Gluttony - Heal - Self Heal 
+  - Sloth - Decoy - Summons Decoys
+  - Wrath - Double Strike - Double Strike on cooldown 
+  - Pride - Disable - Periodically disabled 1 of your abilities (Forces the counter to 0 until the next cast of this)
+
 - Save file system
   - Serialize the gamestate object minus the current level or event sections?
 
 - Sounds effects!
+
 - Muuuusic!!!
+
+- Coiled Gold-Leaf 
+            = High Stamina, Loot Bonus (5%)
+  - Available to Coil Subs
+  - Cannot Upgrade
+  - C for Stamina
+  - D for other stats
 
 - Brass     = Balanced Stats, Brass Tacks (Xp Bonus, 5, 10, 15, 20%)
   - D => C => B => A for all stats

@@ -9,44 +9,59 @@ export type Currencies = {
   silverFragments: number,
   goldFragments: number,
 }
-enum ItemType
+
+export enum Boss
 {
-  Frame,
-  Mirror,
-  Gem
+  Greed = 1,
+  Envy,
+  Lust,
+  Gluttony,
+  Sloth,
+  Wrath,
+  Pride
 }
-type Item = {
-  itemType: ItemType,
+
+type Gem = {
+  name: string,
+  owned: boolean,
+  level: number
 }
+
 enum FrameMaterial
 {
+  Coil,
   Brass,
   Steel,
   Silver,
   Gold
-}
-enum PolishLevel
+};
+enum FrameQuality
 {
   Tarnished,
   Polished,
   Pristine,
   Ornate
-}
-type Frame = Item & {
-  material: FrameMaterial,
-  polishLevel: PolishLevel
-}
+};
 enum MirrorQuality
 {
   Shattered,
   Cracked,
   Imperfect,
   Flawless,
-}
-type Mirror = Item & {
-  level: number,
-  frame: Frame,
+};
+type Mirror = {
+  owned: boolean,
+  material: FrameMaterial,
+  frameQuality: FrameQuality
   quality: MirrorQuality
+}
+
+type Stats = {
+  health: number,
+  sanity: number,
+  attack: number,
+  defense: number,
+  attackSpeed: number
 }
 type Player = {
   level: number,
@@ -57,12 +72,10 @@ type Player = {
   maxSanity: number,
   attack: number,
   defense: number,
-  attackSpeed: number,
-  mirror: Mirror
+  attackSpeed: number
 }
 export type Enemy = {
   alive: boolean,
-  name: string,
   health: number,
   maxHealth: number,
   attack: number,
@@ -113,12 +126,14 @@ export type Room = {
 }
 type Level = {
   difficulty: number,
+  realm: Boss,
   tileMap: Int8Array,
   playerPosition: v2,
   rooms: Room[],
 }
 const nullLevel: Level = {
   difficulty: 0,
+  realm: Boss.Greed,
   tileMap: new Int8Array(),
   playerPosition: [0, 0],
   rooms: []
@@ -126,8 +141,11 @@ const nullLevel: Level = {
 
 type GameState = {
   player: Player,
+  equippedMirror: FrameMaterial,
+  mirrors: { [key in FrameMaterial]: Mirror },
   currencies: Currencies,
-  inventory: Item[],
+  gems: Gem[],
+  realmDeck: Boss[],
   currentLevel: Level,
   currentEvent: DialogEvent | null,
   transition: InterpolationData | null,
@@ -144,14 +162,37 @@ export const gameState: GameState = {
     attack: 2,
     defense: 2,
     attackSpeed: 100,
-    mirror: {
-      itemType: ItemType.Mirror,
-      level: 1,
-      frame: {
-        itemType: ItemType.Frame,
-        material: FrameMaterial.Brass,
-        polishLevel: PolishLevel.Tarnished
-      },
+  },
+  equippedMirror: FrameMaterial.Brass,
+  mirrors: {
+    [FrameMaterial.Coil]: {
+      owned: false,
+      material: FrameMaterial.Coil,
+      frameQuality: FrameQuality.Tarnished,
+      quality: MirrorQuality.Shattered
+    },
+    [FrameMaterial.Brass]: {
+      owned: true,
+      material: FrameMaterial.Brass,
+      frameQuality: FrameQuality.Tarnished,
+      quality: MirrorQuality.Shattered
+    },
+    [FrameMaterial.Steel]: {
+      owned: false,
+      material: FrameMaterial.Steel,
+      frameQuality: FrameQuality.Tarnished,
+      quality: MirrorQuality.Shattered
+    },
+    [FrameMaterial.Silver]: {
+      owned: false,
+      material: FrameMaterial.Silver,
+      frameQuality: FrameQuality.Tarnished,
+      quality: MirrorQuality.Shattered
+    },
+    [FrameMaterial.Gold]: {
+      owned: false,
+      material: FrameMaterial.Gold,
+      frameQuality: FrameQuality.Tarnished,
       quality: MirrorQuality.Shattered
     }
   },
@@ -163,7 +204,8 @@ export const gameState: GameState = {
     silverFragments: 0,
     goldFragments: 0,
   },
-  inventory: [],
+  gems: [],
+  realmDeck: [],
   currentLevel: nullLevel,
   currentEvent: null,
   transition: null,
@@ -185,13 +227,16 @@ export const gameState: GameState = {
 
 export function resetPlayer(): void
 {
+  const stats = getBaseStatsForMirror(gameState.mirrors[gameState.equippedMirror]);
   gameState.player.xp = 0;
   gameState.player.level = 1;
+  gameState.player.maxHealth = stats.health;
+  gameState.player.maxSanity = stats.sanity;
   gameState.player.health = gameState.player.maxHealth;
   gameState.player.sanity = gameState.player.maxSanity;
-  gameState.player.attackSpeed = 100;
-  gameState.player.attack = 2;
-  gameState.player.defense = 2;
+  gameState.player.attackSpeed = stats.attackSpeed;
+  gameState.player.attack = stats.attack;
+  gameState.player.defense = stats.defense;
 }
 
 export function levelUpPlayer(): void
@@ -200,7 +245,16 @@ export function levelUpPlayer(): void
   while (player.xp >= nextLevel(player.level))
   {
     player.level++;
-    // TODO(dbrad): mirror based stat scaling
+    const stats = getStatIncreaseForMirror(gameState.mirrors[gameState.equippedMirror]);
+    gameState.player.maxHealth += stats.health;
+    gameState.player.health += stats.health;
+
+    gameState.player.maxSanity += stats.sanity;
+    gameState.player.sanity += stats.sanity;
+
+    gameState.player.attackSpeed += stats.attackSpeed;
+    gameState.player.attack += stats.attack;
+    gameState.player.defense += stats.defense;
   }
 }
 
@@ -208,3 +262,62 @@ export function nextLevel(level: number): number
 {
   return Math.round(0.04 * (level ** 3) + 0.8 * (level ** 2) + 2 * level)
 }
+
+function getBaseStatsForMirror(mirror: Mirror): Stats
+{
+  return {
+    health: 20,
+    sanity: 10,
+    attack: 2,
+    defense: 2,
+    attackSpeed: 100
+  }
+}
+
+
+function getStatIncreaseForMirror(mirror: Mirror): Stats
+{
+  return {
+    health: 2,
+    sanity: 1,
+    attack: 1,
+    defense: 1,
+    attackSpeed: 5
+  }
+}
+
+// TODO(dbrad): Wall tones
+export const wallColour = [
+  0xFFFFFFFF,
+  0xFF00FF00,
+  0xFF00FFFF,
+  0xFFFFFFFF,
+  0xFFFFFFFF,
+  0xFFFFFFFF,
+  0xFFFFFFFF,
+  0xFFFFFFFF,
+];
+
+// TODO(dbrad): Floor tones
+export const floorColour = [
+  0xFFFFFFFF,
+  0xFF00FF00,
+  0xFF00FFFF,
+  0xFFFFFFFF,
+  0xFFFFFFFF,
+  0xFFFFFFFF,
+  0xFFFFFFFF,
+  0xFFFFFFFF,
+];
+
+// TODO(dbrad): Enemy tones
+export const enemyColour = [
+  0xFFFFFFFF,
+  0xFF00FF00,
+  0xFF00FFFF,
+  0xFFFFFFFF,
+  0xFFFFFFFF,
+  0xFFFFFFFF,
+  0xFFFFFFFF,
+  0xFFFFFFFF,
+];

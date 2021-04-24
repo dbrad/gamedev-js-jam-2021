@@ -1,5 +1,5 @@
 import { Align, pushQuad, pushSpriteAndSave } from "../draw";
-import { Currencies, EventType, LootType, gameState } from "../gamestate";
+import { Currencies, EventType, LootType, floorColour, gameState, wallColour } from "../gamestate";
 import { Direction, addChildNode, createButtonNode, createMovementButtonNode, createNode, createTextNode, createWindowNode, moveNode, node_children, node_enabled, node_size, node_sprite_timestamp, node_text, node_visible, updateTextNode } from "../node";
 import { Easing, InterpolationData, createInterpolationData, interpolate } from "../interpolate";
 import { Scenes, setScene } from "../scene-manager";
@@ -243,11 +243,11 @@ export function adventure(now: number, delta: number): void
         const renderY = tileY * 16 - cameraTopLeft[1] - 12;
         if (gameState.currentLevel?.tileMap[tileY * 110 + tileX] === 2)
         {
-          pushSpriteAndSave("wall_02", renderX, renderY, 0xFF1e1e91, 2, 2);
+          pushSpriteAndSave("wall_02", renderX, renderY, wallColour[gameState.currentLevel.realm], 2, 2);
         }
         else if (gameState.currentLevel?.tileMap[tileY * 110 + tileX] === 5)
         {
-          pushSpriteAndSave("floor_01", renderX, renderY, 0xFFFFFFFF, 2, 2);
+          pushSpriteAndSave("floor_01", renderX, renderY, floorColour[gameState.currentLevel.realm], 2, 2);
         }
         else
         {
@@ -554,7 +554,7 @@ export function adventure(now: number, delta: number): void
       {
         game_mode = mode.Move;
 
-        playerLERP = createInterpolationData(200, gameState.currentLevel.playerPosition, delayedTarget, Easing.Linear, () =>
+        playerLERP = createInterpolationData(100, gameState.currentLevel.playerPosition, delayedTarget, Easing.Linear, () =>
         {
           game_mode = mode.Player;
         });

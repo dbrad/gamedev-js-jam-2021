@@ -1,4 +1,4 @@
-import { LootType, Room, gameState, resetPlayer } from "../gamestate";
+import { Boss, LootType, Room, gameState, resetPlayer } from "../gamestate";
 import { Scenes, setScene } from "../scene-manager";
 import { addChildNode, createButtonNode, createNode, moveNode, node_enabled, node_size, node_visible } from "../node";
 import { rand, shuffle } from "../random";
@@ -61,7 +61,7 @@ export function setupMissionSelect(): void
   select10StarId = createButtonNode("???", [0, 0], [200, 70]);
   addChildNode(missionSelectRootId, select10StarId);
 
-  backButtonId = createButtonNode("back", [0, 0], [70, 40]);
+  backButtonId = createButtonNode("back", [0, 0], [70, 46]);
   addChildNode(missionSelectRootId, backButtonId);
 }
 
@@ -191,8 +191,24 @@ const roomHeight = 9;
 const tileMapWidth = 110;
 const tileMapHeight = 72;
 
+let realm: Boss = Boss.Greed;
+
 function generateLevel(difficulty: number): void
 {
+
+  if (difficulty <= 7)
+  {
+    realm = difficulty as Boss;
+  }
+  else
+  {
+    if (gameState.realmDeck.length === 0)
+    {
+      gameState.realmDeck = shuffle([1, 2, 3, 4, 5, 6, 7] as Boss[]);
+    }
+    realm = gameState.realmDeck.pop() ?? Boss.Greed;
+  }
+
   // Generate Room Layout
   const numberOfRooms = Math.floor(rand(0, 2) + 5 + difficulty * 2.6);
   const roomLayout: number[] = [];
@@ -310,14 +326,14 @@ function generateLevel(difficulty: number): void
 
   // Generate Room Locations
   const rooms: Room[] = [];
-  const roomDeck: Room[] = createRoomDeck(numberOfRooms, deadEnds.length);
+  const roomDeck: Room[] = createRoomDeck(difficulty, numberOfRooms, deadEnds.length);
   const shuffledDeadEnds = shuffle(deadEnds);
   for (let index of shuffledDeadEnds)
   {
     if (roomLayout[index] === 1)
     {
       roomLayout[index] = 2;
-      rooms[index] = roomDeck.shift() || createMoneyRoom();
+      rooms[index] = roomDeck.shift() || createMoneyRoom(difficulty, numberOfRooms);
     }
   }
 
@@ -329,7 +345,7 @@ function generateLevel(difficulty: number): void
       if (roomLayout[roomIndex] === 1 && roomIndex != 35)
       {
         roomLayout[roomIndex] = 2;
-        rooms[roomIndex] = roomDeck.shift() || createMoneyRoom();
+        rooms[roomIndex] = roomDeck.shift() || createMoneyRoom(difficulty, numberOfRooms);
       }
     }
   }
@@ -338,58 +354,58 @@ function generateLevel(difficulty: number): void
 
   gameState.currentLevel = {
     difficulty: difficulty,
+    realm,
     playerPosition: [60 * 16, 31 * 16],
     tileMap: tileMap,
     rooms: rooms
   };
 }
 
-function createRoomDeck(numberOfRooms: number, numberOfDeadEnds: number): Room[]
+function createRoomDeck(difficulty: number, numberOfRooms: number, numberOfDeadEnds: number): Room[]
 {
   const roomDeck: Room[] = [];
   numberOfDeadEnds -= 1;
-  roomDeck.push(createBossRoom());
+  roomDeck.push(createBossRoom(difficulty, numberOfRooms));
 
   const deadEndRooms: Room[] = [];
   const numberOfChoices = Math.max(0, Math.ceil(numberOfDeadEnds * 0.5));
   for (let i = 0; i < numberOfChoices; i++)
   {
-    deadEndRooms.push(createChoiceRoom());
+    deadEndRooms.push(createChoiceRoom(difficulty, numberOfRooms));
   }
 
   const numberOfBoonsOrCurses = Math.max(0, Math.ceil((numberOfDeadEnds - numberOfChoices) * 0.8));
   for (let i = 0; i < numberOfBoonsOrCurses; i++)
   {
-    deadEndRooms.push(createBoonCurseRoom());
+    deadEndRooms.push(createBoonCurseRoom(difficulty, numberOfRooms));
   }
 
   const numberOfDialogs = Math.max(0, numberOfDeadEnds - numberOfChoices - numberOfBoonsOrCurses);
   for (let i = 0; i < numberOfDialogs; i++)
   {
-    deadEndRooms.push(createDialogRoom());
+    deadEndRooms.push(createDialogRoom(difficulty, numberOfRooms));
   }
 
   roomDeck.push(...shuffle(deadEndRooms));
-
 
   const numberOfRoomsRemaining = numberOfRooms - numberOfChoices - numberOfBoonsOrCurses - numberOfDialogs;
   const numberOfCombat = Math.max(0, Math.ceil(numberOfRoomsRemaining * 0.5));
   const regularRooms: Room[] = [];
   for (let i = 0; i < numberOfCombat; i++)
   {
-    regularRooms.push(createCombatRoom());
+    regularRooms.push(createCombatRoom(difficulty, numberOfRoomsRemaining));
   }
 
   const numberOfMoney = Math.max(0, Math.ceil((numberOfRoomsRemaining - numberOfCombat) * 0.6));
   for (let i = 0; i < numberOfMoney; i++)
   {
-    regularRooms.push(createMoneyRoom());
+    regularRooms.push(createMoneyRoom(difficulty, numberOfRoomsRemaining));
   }
 
   const numberOfTreasures = Math.max(0, numberOfRoomsRemaining - numberOfCombat - numberOfMoney);
   for (let i = 0; i < numberOfTreasures; i++)
   {
-    regularRooms.push(createTresureRoom());
+    regularRooms.push(createTresureRoom(difficulty, numberOfRoomsRemaining));
   }
 
   roomDeck.push(...shuffle(regularRooms));
@@ -399,6 +415,36 @@ function createRoomDeck(numberOfRooms: number, numberOfDeadEnds: number): Room[]
   // @endif
   return roomDeck;
 }
+
+const moneyPerLevel = [
+  0,
+  15,
+  50,
+  145,
+  330,
+  635,
+  1090,
+  1725,
+  2570,
+  3655,
+  5010,
+  6665,
+];
+
+const fragPerLevel = [
+  0,
+  5,
+  12,
+  25,
+  42,
+  65,
+  92,
+  125,
+  162,
+  205,
+  252,
+  305,
+];
 
 function createEmptyRoom(): Room
 {
@@ -412,14 +458,14 @@ function createEmptyRoom(): Room
   }
 }
 
-function createBossRoom(): Room
+function createBossRoom(difficulty: number, numberOfRooms: number): Room
 {
+  const money = Math.ceil((moneyPerLevel[difficulty] * 0.3));
   return {
     seen: false,
     peeked: false,
     enemies: [{
       alive: true,
-      name: "goblin",
       health: 10,
       maxHealth: 10,
       attack: 1,
@@ -429,13 +475,13 @@ function createBossRoom(): Room
     }],
     exit: true,
     loot: [
-      { type: LootType.Sand, amount: 50 }
+      { type: LootType.Sand, amount: money }
     ],
     events: []
   }
 }
 
-function createDialogRoom(): Room
+function createDialogRoom(difficulty: number, numberOfRooms: number): Room
 {
   return {
     seen: false,
@@ -449,7 +495,7 @@ function createDialogRoom(): Room
   }
 }
 
-function createChoiceRoom(): Room
+function createChoiceRoom(difficulty: number, numberOfRooms: number): Room
 {
   return {
     seen: false,
@@ -463,7 +509,7 @@ function createChoiceRoom(): Room
   }
 }
 
-function createBoonCurseRoom(): Room
+function createBoonCurseRoom(difficulty: number, numberOfRooms: number): Room
 {
   return {
     seen: false,
@@ -477,15 +523,15 @@ function createBoonCurseRoom(): Room
   }
 }
 
-function createCombatRoom(): Room
+function createCombatRoom(difficulty: number, numberOfRooms: number): Room
 {
+  const money = Math.ceil((moneyPerLevel[difficulty] * 0.7) / (numberOfRooms - 1));
   return {
     seen: false,
     peeked: false,
     enemies: [
       {
         alive: true,
-        name: "goblin",
         health: 10,
         maxHealth: 10,
         attack: 1,
@@ -496,37 +542,38 @@ function createCombatRoom(): Room
     ],
     exit: false,
     loot: [
-      { type: LootType.Sand, amount: 10 }
+      { type: LootType.Sand, amount: money }
     ],
     events: []
   }
 }
 
-function createMoneyRoom(): Room
+function createMoneyRoom(difficulty: number, numberOfRooms: number): Room
 {
+  const money = Math.ceil((moneyPerLevel[difficulty] * 0.7) / (numberOfRooms - 1));
   return {
     seen: false,
     peeked: false,
     enemies: [],
     exit: false,
     loot: [
-      { type: LootType.Sand, amount: 10 }
+      { type: LootType.Sand, amount: money }
     ],
     events: []
   }
 }
 
-function createTresureRoom(): Room
+function createTresureRoom(difficulty: number, numberOfRooms: number): Room
 {
+  const money = Math.ceil((moneyPerLevel[difficulty] * 0.7) / (numberOfRooms - 1));
   return {
     seen: false,
     peeked: false,
     enemies: [],
     exit: false,
     loot: [
-      { type: LootType.Sand, amount: 10 }
+      { type: LootType.Sand, amount: money }
     ],
     events: []
   }
 }
-

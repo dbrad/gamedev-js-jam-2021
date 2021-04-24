@@ -177,6 +177,7 @@
     {
       "type": "row",
       "name": [
+        "coil_mirror",
         "brass_mirror",
         "steel_mirror",
         "silver_mirror",
