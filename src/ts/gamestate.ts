@@ -1,3 +1,5 @@
+import { FrameMaterial, FrameQuality, Mirror, MirrorQuality, getBaseStatsForMirror, getStatIncreaseForMirror } from "./mirror"
+
 import { InterpolationData } from "./interpolate"
 import { v2 } from "./v2"
 
@@ -21,48 +23,39 @@ export enum Boss
   Pride
 }
 
-type Gem = {
-  name: string,
+export enum AbilityType
+{
+  BonusXp,
+  Copy,
+  BonusLoot,
+  Steal,
+  Sacrifice,
+  Pacify,
+  Heal,
+  Reflect,
+  DoubleStrike,
+  RevealMap,
+  Disable
+}
+
+export enum GemType
+{
+  Emerald,
+  Citrine,
+  Morganite,
+  FireOpal,
+  Sapphire,
+  Ruby,
+  Alexandrite
+}
+export type Gem = {
+  abilitiyType: AbilityType,
+  type: GemType,
+  colour: number,
   owned: boolean,
   level: number
 }
 
-enum FrameMaterial
-{
-  Coil,
-  Brass,
-  Steel,
-  Silver,
-  Gold
-};
-enum FrameQuality
-{
-  Tarnished,
-  Polished,
-  Pristine,
-  Ornate
-};
-enum MirrorQuality
-{
-  Shattered,
-  Cracked,
-  Imperfect,
-  Flawless,
-};
-type Mirror = {
-  owned: boolean,
-  material: FrameMaterial,
-  frameQuality: FrameQuality
-  quality: MirrorQuality
-}
-
-type Stats = {
-  health: number,
-  sanity: number,
-  attack: number,
-  defense: number,
-  attackSpeed: number
-}
 type Player = {
   level: number,
   xp: number,
@@ -81,13 +74,13 @@ export type Enemy = {
   attack: number,
   defense: number,
   attackSpeed: number,
-  abilities: null
+  abilities: [AbilityType, number][]
 }
 
 export enum LootType
 {
   Sand,
-  Mirror,
+  Glass,
   Brass,
   Steel,
   Silver,
@@ -119,7 +112,7 @@ export type DialogEvent = {
 export type Room = {
   seen: boolean,
   peeked: boolean,
-  enemies: Enemy[],
+  enemy: Enemy | null,
   exit: boolean,
   loot: Loot[],
   events: DialogEvent[]
@@ -140,11 +133,14 @@ const nullLevel: Level = {
 };
 
 type GameState = {
+  file: number,
+  timestamp: Date,
   player: Player,
   equippedMirror: FrameMaterial,
   mirrors: { [key in FrameMaterial]: Mirror },
   currencies: Currencies,
-  gems: Gem[],
+  equipedGems: GemType[],
+  gems: { [key in GemType]: Gem },
   realmDeck: Boss[],
   currentLevel: Level,
   currentEvent: DialogEvent | null,
@@ -152,6 +148,8 @@ type GameState = {
   flags: { [index: string]: boolean }
 }
 export const gameState: GameState = {
+  file: -1,
+  timestamp: new Date,
   player: {
     level: 1,
     xp: 0,
@@ -204,7 +202,58 @@ export const gameState: GameState = {
     silverFragments: 0,
     goldFragments: 0,
   },
-  gems: [],
+  equipedGems: [],
+  gems: {
+    [GemType.Emerald]: {
+      type: GemType.Emerald,
+      colour: 0xFF00FF00,
+      owned: false,
+      level: 1,
+      abilitiyType: AbilityType.BonusXp
+    },
+    [GemType.Citrine]: {
+      type: GemType.Citrine,
+      colour: 0xFF00FFFF,
+      owned: false,
+      level: 1,
+      abilitiyType: AbilityType.BonusLoot
+    },
+    [GemType.Morganite]: {
+      type: GemType.Morganite,
+      colour: 0xFF0000FF,
+      owned: false,
+      level: 1,
+      abilitiyType: AbilityType.Sacrifice
+    },
+    [GemType.FireOpal]: {
+      type: GemType.FireOpal,
+      colour: 0xFF00FF00,
+      owned: false,
+      level: 1,
+      abilitiyType: AbilityType.Heal
+    },
+    [GemType.Sapphire]: {
+      type: GemType.Sapphire,
+      colour: 0xFF00FF00,
+      owned: false,
+      level: 1,
+      abilitiyType: AbilityType.Reflect
+    },
+    [GemType.Ruby]: {
+      type: GemType.Ruby,
+      colour: 0xFF00FF00,
+      owned: false,
+      level: 1,
+      abilitiyType: AbilityType.DoubleStrike
+    },
+    [GemType.Alexandrite]: {
+      type: GemType.Alexandrite,
+      colour: 0xFFFF00FF,
+      owned: false,
+      level: 1,
+      abilitiyType: AbilityType.RevealMap
+    }
+  },
   realmDeck: [],
   currentLevel: nullLevel,
   currentEvent: null,
@@ -242,8 +291,9 @@ export function resetPlayer(): void
 export function levelUpPlayer(): void
 {
   const player = gameState.player;
-  while (player.xp >= nextLevel(player.level))
+  if (player.xp >= nextLevel(player.level))
   {
+    player.xp -= nextLevel(player.level);
     player.level++;
     const stats = getStatIncreaseForMirror(gameState.mirrors[gameState.equippedMirror]);
     gameState.player.maxHealth += stats.health;
@@ -261,29 +311,6 @@ export function levelUpPlayer(): void
 export function nextLevel(level: number): number
 {
   return Math.round(0.04 * (level ** 3) + 0.8 * (level ** 2) + 2 * level)
-}
-
-function getBaseStatsForMirror(mirror: Mirror): Stats
-{
-  return {
-    health: 20,
-    sanity: 10,
-    attack: 2,
-    defense: 2,
-    attackSpeed: 100
-  }
-}
-
-
-function getStatIncreaseForMirror(mirror: Mirror): Stats
-{
-  return {
-    health: 2,
-    sanity: 1,
-    attack: 1,
-    defense: 1,
-    attackSpeed: 5
-  }
 }
 
 // TODO(dbrad): Wall tones

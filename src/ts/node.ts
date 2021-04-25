@@ -1,6 +1,6 @@
 import { Align, parseText, pushQuad, pushSprite, pushSpriteAndSave, pushText, textHeight, textWidth } from "./draw";
 import { Easing, InterpolationData, createInterpolationData } from "./interpolate";
-import { gl_restore, gl_save, gl_scale, gl_translate } from "./gl";
+import { gl_restore, gl_save, gl_translate } from "./gl";
 
 import { TEXTURE_CACHE } from "./texture";
 import { assert } from "./debug";
@@ -17,7 +17,8 @@ export const enum TAG
   WINDOW,
   BUTTON,
   MOVEMENT_BUTTON,
-  COMBAT_BAR
+  COMBAT_BAR,
+  XP_BAR
 }
 
 //#region Base Node Data
@@ -183,6 +184,9 @@ export function renderNode(nodeId: number, now: number, delta: number): void
         case TAG.COMBAT_BAR:
           renderCombatBar(nodeId);
           break;
+        case TAG.XP_BAR:
+          renderXPBar(nodeId);
+          break;
         case TAG.NONE:
         default:
       }
@@ -209,22 +213,22 @@ export function renderNode(nodeId: number, now: number, delta: number): void
 //#endregion Base Node
 
 //#region Text Node
-export function createTextNode(text: string, scale: number = 1, align: Align = Align.Left, shadow: boolean = false): number
+export function createTextNode(text: string, scale: number = 1, align: Align = Align.Left, colour: number = 0xFFFFFFFF): number
 {
   const nodeId = createNode();
   node_tag[nodeId] = TAG.TEXT;
-  updateTextNode(nodeId, text, scale, align, shadow);
+  updateTextNode(nodeId, text, scale, align, colour);
   return nodeId;
 }
 
-export function updateTextNode(nodeId: number, text: string, scale: number = 1, align: Align = Align.Left, shadow: boolean = false): void
+export function updateTextNode(nodeId: number, text: string, scale: number = 1, align: Align = Align.Left, colour: number = 0xFFFFFFFF): void
 {
   const lines = parseText(text);
   const width = textWidth(text.length, 1);
   const height = textHeight(lines, 1);
   node_size[nodeId] = [width, height];
   node_text_align[nodeId] = align;
-  node_drop_shadow[nodeId] = shadow;
+  node_colour[nodeId] = colour;
   node_scale[nodeId] = scale;
   node_text[nodeId] = text;
 }
@@ -233,18 +237,14 @@ function renderTextNode(nodeId: number): void
 {
   const scale = node_scale[nodeId];
   const textAlign = node_text_align[nodeId];
-  if (node_drop_shadow[nodeId])
-  {
-    pushText(node_text[nodeId], scale, scale, { scale, textAlign, colour: 0xFF000000 });
-  }
-  pushText(node_text[nodeId], 0, 0, { scale, textAlign });
+  pushText(node_text[nodeId], 0, 0, { scale, textAlign, colour: node_colour[nodeId] });
 }
 //#endregion Text Node
 
 //#region Sprite Node
 export type Frame = { spriteName: string, duration: number }
 const node_sprite_frames: Map<number, Frame[]> = new Map();
-const node_colour: number[] = [];
+export const node_colour: number[] = [];
 export const node_sprite_timestamp: number[] = [];
 const node_sprite_duration: number[] = [];
 const node_sprite_loop: boolean[] = [];
@@ -341,18 +341,30 @@ function renderWindow(nodeId: number): void
   const size = nodeSize(nodeId);
 
   pushQuad(0, 0, size[0], size[1], 0xFFFFFFFF);
-  pushQuad(2, 2, size[0] - 4, size[1] - 4, 0xFF000000);
+  if (node_colour[nodeId])
+  {
+    pushQuad(2, 2, size[0] - 4, size[1] - 4, node_colour[nodeId]);
+  }
+  else
+  {
+    pushQuad(2, 2, size[0] - 4, size[1] - 4, 0xFF000000);
+  }
 }
 //#endregion Window Node
 
 //#region Button Node
-export function createButtonNode(text: string, pos: v2, size: v2): number
+let node_second_text_line: string[] = []
+export function createButtonNode(text: string, size: v2, secondLine: string = ""): number
 {
   const nodeId = createNode();
   node_tag[nodeId] = TAG.BUTTON;
-  node_position[nodeId] = pos;
   node_size[nodeId] = size;
   node_text[nodeId] = text;
+
+  if (secondLine !== "")
+  {
+    node_second_text_line[nodeId] = secondLine;
+  }
 
   return nodeId;
 }
@@ -375,7 +387,13 @@ function renderButton(nodeId: number): void
   {
     // zzfxP(buttonHover);
   }
-  pushText(node_text[nodeId], Math.floor(size[0] / 2), Math.floor(size[1] / 2) - 8, { textAlign: Align.Center, scale: 2 });
+  if (node_second_text_line[nodeId])
+  {
+    pushText(node_second_text_line[nodeId], Math.floor(size[0] / 2), Math.floor(size[1] / 2) + 8, { wrap: size[0] - 4, textAlign: Align.Center, scale: 1, colour: 0xFF888888 });
+  }
+  {
+    pushText(node_text[nodeId], Math.floor(size[0] / 2), Math.floor(size[1] / 2) - 8, { textAlign: Align.Center, scale: 2 });
+  }
 
 }
 //#endregion Button Node
@@ -465,3 +483,36 @@ function renderCombatBar(nodeId: number): void
   }
 }
 //#endregion Combat Bars
+
+//#region XP Bar
+const node_xp_bar_values: number[] = [];
+export function createXPBarNode(scale: number = 2): number
+{
+  const nodeId = createNode();
+  node_tag[nodeId] = TAG.XP_BAR;
+  node_size[nodeId] = [scale * 32, scale * 4];
+  node_scale[nodeId] = scale;
+  node_combat_bar_values[nodeId] = [0, 0];
+
+  const frames: Frame[] = [{ spriteName: "empty_bar", duration: 0 }];
+  const spriteId = createSprite(frames, scale);
+  node_interactive[spriteId] = false;
+  addChildNode(nodeId, spriteId);
+
+  return nodeId;
+}
+
+export function updateXPBarValues(nodeId: number, value: number): void
+{
+  node_xp_bar_values[nodeId] = value;
+}
+
+function renderXPBar(nodeId: number): void
+{
+  const xp = node_xp_bar_values[nodeId];
+  const scale = node_scale[nodeId];
+
+  const maxLength = 32 * scale;
+  pushQuad(0, 1 * scale, Math.ceil(maxLength * xp), 2 * scale, 0xFFe09626); // 2696e0
+}
+//#endregion XP Bar

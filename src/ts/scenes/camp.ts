@@ -5,12 +5,12 @@ import { screenCenterX, screenHeight, screenWidth } from "../screen";
 
 import { arrangeMissionSelect } from "./mission-select";
 import { inputContext } from "../input";
+import { updateSmithScreen } from "./smith";
 
 export let campRootId = -1;
 let option01 = -1;
 let option02 = -1;
 let option03 = -1;
-let option04 = -1;
 
 export function setupCampScene(): void
 {
@@ -56,14 +56,15 @@ export function setupCampScene(): void
   const window = createWindowNode([420, 4], [186, 352]);
   addChildNode(campRootId, window);
 
-  option01 = createButtonNode("depart", [8, 8], [170, 70]);
+  option01 = createButtonNode("delve", [170, 70], "into self-reflection");
+  moveNode(option01, [8, 8]);
   addChildNode(window, option01);
-  option02 = createButtonNode("craft", [8, 98], [170, 70]);
+  option02 = createButtonNode("smith", [170, 70], "craft + update");
+  moveNode(option02, [8, 98]);
   addChildNode(window, option02);
-  option03 = createButtonNode("upgrade", [8, 188], [170, 70]);
+  option03 = createButtonNode("quit", [170, 40]);
+  moveNode(option03, [8, 304]);
   addChildNode(window, option03);
-  option04 = createButtonNode("quit", [8, 304], [170, 40]);
-  addChildNode(window, option04);
 }
 
 export function campScene(): void
@@ -84,6 +85,17 @@ export function campScene(): void
     // setScene(Scenes.Adventure);
     arrangeMissionSelect();
     setScene(Scenes.MissionSelect);
+  }
+
+  if (inputContext.fire === option02)
+  {
+    updateSmithScreen();
+    setScene(Scenes.Smith);
+  }
+
+  if (inputContext.fire === option03)
+  {
+    setScene(Scenes.MainMenu);
   }
 
 }

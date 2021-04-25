@@ -6,9 +6,11 @@ import { dialogSystem, dialogSystemRootId, setupDialogScene } from "./scenes/dia
 import { gl_clear, gl_flush, gl_getContext, gl_init, gl_setClear } from "./gl"
 import { initializeInput, inputContext } from "./input";
 import { mainMenuScene, setupMainMenuScene } from "./scenes/main-menu";
+import { mirrorSelect, setupMirrorSelect } from "./scenes/mirror-select";
 import { missionSelect, setupMissionSelect } from "./scenes/mission-select";
 import { moveNode, nodeInput, node_movement, renderNode } from "./node";
 import { screenCenterX, screenCenterY, screenHeight, screenWidth } from "./screen";
+import { setupSmithScene, smith } from "./scenes/smith";
 
 import { colourToHex } from "./util";
 import { gameState } from "./gamestate";
@@ -45,7 +47,9 @@ window.addEventListener(`load`, async () =>
 
     setupMainMenuScene();
     setupCampScene();
+    setupSmithScene();
     setupMissionSelect();
+    setupMirrorSelect();
     setupAdventureScene();
     setupDialogScene();
   };
@@ -92,11 +96,17 @@ window.addEventListener(`load`, async () =>
         case Scenes.Camp:
           campScene();
           break;
+        case Scenes.Smith:
+          smith(now, delta);
+          break;
         case Scenes.Adventure:
           adventure(now, delta);
           break;
         case Scenes.MissionSelect:
           missionSelect(now, delta);
+          break;
+        case Scenes.MirrorSelect:
+          mirrorSelect(now, delta);
           break;
       }
 
@@ -112,7 +122,7 @@ window.addEventListener(`load`, async () =>
       {
         let i = interpolate(now, gameState.transition);
         const colour = colourToHex(i.values[0], 0, 0, 0);
-        pushQuad(0, 0, screenWidth, screenHeight, colour);
+        pushQuad(0, 0, screenWidth + 2, screenHeight + 2, colour);
       }
 
       inputContext.fire = -1;
@@ -133,8 +143,8 @@ window.addEventListener(`load`, async () =>
     gl_flush();
 
     // @ifdef DEBUG
-    tickStats(delta, now);
-    gl_flush();
+    // tickStats(delta, now);
+    // gl_flush();
     // @endif
 
     window.requestAnimationFrame(loop);

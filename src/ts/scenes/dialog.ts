@@ -1,6 +1,6 @@
 import { Align, pushQuad, pushText } from "../draw";
 import { DialogEvent, EventChoice, EventType, gameState } from "../gamestate";
-import { addChildNode, createButtonNode, createNode, createWindowNode, node_enabled, node_size, node_text, node_visible } from "../node";
+import { addChildNode, createButtonNode, createNode, createWindowNode, moveNode, node_enabled, node_size, node_text, node_visible } from "../node";
 import { screenCenterX, screenCenterY, screenHeight, screenWidth } from "../screen";
 
 import { inputContext } from "../input";
@@ -26,10 +26,12 @@ export function setupDialogScene(): void
   addChildNode(dialogSystemRootId, choiceWindowId);
   node_enabled[choiceWindowId] = false;
 
-  choiceButton01Id = createButtonNode("", [4, 4], [250, 40]);
+  choiceButton01Id = createButtonNode("", [250, 40]);
+  moveNode(choiceButton01Id, [4, 4])
   addChildNode(choiceWindowId, choiceButton01Id);
 
-  choiceButton02Id = createButtonNode("", [4, 50], [250, 40]);
+  choiceButton02Id = createButtonNode("", [250, 40]);
+  moveNode(choiceButton02Id, [4, 50])
   addChildNode(choiceWindowId, choiceButton02Id);
 
 }
