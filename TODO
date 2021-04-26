@@ -1,11 +1,16 @@
 - Page to show gem levels!!!!!
 
-- upgrade costs
+- don't show mirrors if only 1?
+
+- look into combat
+  - make sure reflect and heal are working
 
 - Sounds effects!
   - zzfx.ts
+  - ???
 
 - background fading?
+  - for smithy and main menu
 
 - add tutorial flow
   - some intro dialog from the smith
