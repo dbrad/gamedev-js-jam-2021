@@ -307,7 +307,7 @@ export function prepareCombatScene( enemy: Enemy ): void
 
     const name: string = AbilityName[ ability.abilityType ];
     const colour: number = AbilityColour[ ability.abilityType ];
-    updateAbilityBar( playerActiveAbilityTimers[ i ], name, colour, ability.timer / AbilityCooldown[ ability.abilityType ][ ability.rank ] );
+    updateAbilityBar( playerActiveAbilityTimers[ i ], name, colour, ability.timer / AbilityCooldown[ ability.abilityType ][ ability.rank - 1 ] );
   }
 
   node_enabled[ playerReflectLabel ] = ( playerReflectDamage > 0 );
@@ -359,7 +359,7 @@ export function prepareCombatScene( enemy: Enemy ): void
 
       const name: string = AbilityName[ ability.abilityType ];
       const colour: number = AbilityColour[ ability.abilityType ];
-      updateAbilityBar( enemyActiveAbilityTimers[ i ], name, colour, ability.timer / AbilityCooldown[ ability.abilityType ][ ability.rank ] );
+      updateAbilityBar( enemyActiveAbilityTimers[ i ], name, colour, ability.timer / AbilityCooldown[ ability.abilityType ][ ability.rank - 1 ] );
     }
 
     node_enabled[ enemyReflectLabel ] = ( enemyReflectDamage > 0 );
@@ -401,7 +401,7 @@ export function combat( now: number, delta: number ): boolean
 
       const name: string = AbilityName[ ability.abilityType ];
       const colour: number = AbilityColour[ ability.abilityType ];
-      updateAbilityBar( playerActiveAbilityTimers[ i ], name, colour, ability.timer / AbilityCooldown[ ability.abilityType ][ ability.rank ] );
+      updateAbilityBar( playerActiveAbilityTimers[ i ], name, colour, ability.timer / AbilityCooldown[ ability.abilityType ][ ability.rank - 1 ] );
     }
 
     if ( combatEnemy && combatEnemy.alive )
@@ -421,7 +421,7 @@ export function combat( now: number, delta: number ): boolean
         }
         const name: string = AbilityName[ ability.abilityType ];
         const colour: number = AbilityColour[ ability.abilityType ];
-        updateAbilityBar( enemyActiveAbilityTimers[ i ], name, colour, ability.timer / AbilityCooldown[ ability.abilityType ][ ability.rank ] );
+        updateAbilityBar( enemyActiveAbilityTimers[ i ], name, colour, ability.timer / AbilityCooldown[ ability.abilityType ][ ability.rank - 1 ] );
       }
     }
 
@@ -553,7 +553,7 @@ export function combat( now: number, delta: number ): boolean
 
                 const name: string = AbilityName[ ability.abilityType ];
                 const colour: number = AbilityColour[ ability.abilityType ];
-                updateAbilityBar( enemyActiveAbilityTimers[ i ], name, colour, ability.timer / AbilityCooldown[ ability.abilityType ][ ability.rank ] );
+                updateAbilityBar( enemyActiveAbilityTimers[ i ], name, colour, ability.timer / AbilityCooldown[ ability.abilityType ][ ability.rank - 1 ] );
               }
             }
             ability.timer = 0;
@@ -584,7 +584,7 @@ export function combat( now: number, delta: number ): boolean
             {
               if ( gameState.currentLevel.currencies[ key ] > 0 )
               {
-                gameState.currentLevel.currencies[ key ] = Math.max( 0, gameState.currentLevel.currencies[ key ] - Math.ceil( gameState.currentLevel.currencies[ key ] * ( 0.05 * ability.rank ) ) );
+                gameState.currentLevel.currencies[ key ] = Math.max( 0, gameState.currentLevel.currencies[ key ] - Math.ceil( gameState.currentLevel.currencies[ key ] * ( 0.05 * ability.rank - 1 ) ) );
                 break;
               }
             }
