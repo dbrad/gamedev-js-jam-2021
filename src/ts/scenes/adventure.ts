@@ -367,7 +367,7 @@ export function adventure(now: number, delta: number): void
   else if (!xpSmoothing && player.xpPool >= 1)
   {
     player.xpPool -= 1;
-    xpSmoothing = createInterpolationData(100, [player.xp], [player.xp + 1])
+    xpSmoothing = createInterpolationData(35, [player.xp], [player.xp + 1])
   }
   else if (xpSmoothing)
   {
