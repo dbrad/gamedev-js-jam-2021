@@ -1,13 +1,12 @@
 import { Align, parseText, pushQuad, pushSprite, pushSpriteAndSave, pushText, textHeight, textWidth } from "./draw";
 import { Easing, InterpolationData, createInterpolationData } from "./interpolate";
+import { buttonHover, zzfxP } from "./zzfx";
 import { gl_restore, gl_save, gl_translate } from "./gl";
 
 import { TEXTURE_CACHE } from "./texture";
 import { assert } from "./debug";
 import { inputContext } from "./input";
 import { v2 } from "./v2";
-
-//import { buttonHover, zzfxP } from "./zzfx";
 
 export const enum TAG
 {
@@ -18,7 +17,8 @@ export const enum TAG
   BUTTON,
   MOVEMENT_BUTTON,
   COMBAT_BAR,
-  XP_BAR
+  XP_BAR,
+  ABILITY_BAR
 }
 
 //#region Base Node Data
@@ -187,6 +187,9 @@ export function renderNode(nodeId: number, now: number, delta: number): void
         case TAG.XP_BAR:
           renderXPBar(nodeId);
           break;
+        case TAG.ABILITY_BAR:
+          renderAbilityBar(nodeId);
+          break;
         case TAG.NONE:
         default:
       }
@@ -353,13 +356,15 @@ function renderWindow(nodeId: number): void
 //#endregion Window Node
 
 //#region Button Node
-let node_second_text_line: string[] = []
-export function createButtonNode(text: string, size: v2, secondLine: string = ""): number
+let node_text_scale: number[] = [];
+export let node_second_text_line: string[] = []
+export function createButtonNode(text: string, size: v2, secondLine: string = "", textScale: number = 2): number
 {
   const nodeId = createNode();
   node_tag[nodeId] = TAG.BUTTON;
   node_size[nodeId] = size;
   node_text[nodeId] = text;
+  node_text_scale[nodeId] = textScale;
 
   if (secondLine !== "")
   {
@@ -385,14 +390,14 @@ function renderButton(nodeId: number): void
   }
   if (inputContext.fire === nodeId)
   {
-    // zzfxP(buttonHover);
+    zzfxP(buttonHover);
   }
   if (node_second_text_line[nodeId])
   {
     pushText(node_second_text_line[nodeId], Math.floor(size[0] / 2), Math.floor(size[1] / 2) + 8, { wrap: size[0] - 4, textAlign: Align.Center, scale: 1, colour: 0xFF888888 });
   }
   {
-    pushText(node_text[nodeId], Math.floor(size[0] / 2), Math.floor(size[1] / 2) - 8, { textAlign: Align.Center, scale: 2 });
+    pushText(node_text[nodeId], Math.floor(size[0] / 2), Math.floor(size[1] / 2) - (4 * node_text_scale[nodeId]), { textAlign: Align.Center, scale: node_text_scale[nodeId] });
   }
 
 }
@@ -509,10 +514,56 @@ export function updateXPBarValues(nodeId: number, value: number): void
 
 function renderXPBar(nodeId: number): void
 {
-  const xp = node_xp_bar_values[nodeId];
+  const xp = Math.min(1, node_xp_bar_values[nodeId]);
   const scale = node_scale[nodeId];
 
   const maxLength = 32 * scale;
   pushQuad(0, 1 * scale, Math.ceil(maxLength * xp), 2 * scale, 0xFFe09626); // 2696e0
 }
 //#endregion XP Bar
+
+//#region Ability Bar
+const node_ability_bar_gem: number[] = [];
+const node_ability_bar_values: number[] = [];
+
+export function createAbilityBarNode(): number
+{
+  const nodeId = createNode();
+  node_tag[nodeId] = TAG.ABILITY_BAR;
+  node_size[nodeId] = [64, 16];
+  node_ability_bar_values[nodeId] = 0;
+  node_colour[nodeId] = 0xFFFFFFFF;
+  node_text[nodeId] = "Test";
+
+  const barFrames: Frame[] = [{ spriteName: "empty_bar", duration: 0 }];
+  const barId = createSprite(barFrames, 2);
+  node_interactive[barId] = false;
+  moveNode(barId, [16, 8]);
+  addChildNode(nodeId, barId);
+
+  const gemFrames: Frame[] = [{ spriteName: "gem", duration: 0 }];
+  const gemId = createSprite(gemFrames, 1);
+  node_interactive[gemId] = false;
+  moveNode(gemId, [0, 0]);
+  addChildNode(nodeId, gemId);
+  node_ability_bar_gem[nodeId] = gemId;
+
+  return nodeId;
+}
+
+export function updateAbilityBar(nodeId: number, label: string, colour: number, value: number): void
+{
+  node_text[nodeId] = label;
+  node_colour[nodeId] = colour;
+  node_colour[node_ability_bar_gem[nodeId]] = colour;
+  node_ability_bar_values[nodeId] = value;
+}
+
+function renderAbilityBar(nodeId: number): void
+{
+  pushText(node_text[nodeId], 16, 0);
+  const value = Math.min(1, node_ability_bar_values[nodeId]);
+
+  pushQuad(16, 10, Math.ceil(64 * value), 4, node_colour[nodeId]);
+}
+//#endregion Ability Bar

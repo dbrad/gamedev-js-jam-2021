@@ -1,19 +1,23 @@
 import { Align, pushQuad, pushSpriteAndSave } from "../draw";
-import { Currencies, LootType, floorColour, gameState, levelUpPlayer, nextLevel, wallColour } from "../gamestate";
-import { Direction, addChildNode, createButtonNode, createMovementButtonNode, createNode, createTextNode, createWindowNode, createXPBarNode, moveNode, node_children, node_enabled, node_size, node_sprite_timestamp, node_text, node_visible, updateTextNode, updateXPBarValues } from "../node";
+import { Currencies, LootType, floorColour, gameState, levelUpGem, levelUpPlayer, nextLevel, wallColour } from "../gamestate";
+import { Direction, addChildNode, createButtonNode, createMovementButtonNode, createNode, createTextNode, createWindowNode, createXPBarNode, moveNode, node_children, node_enabled, node_second_text_line, node_size, node_sprite_timestamp, node_text, node_visible, updateTextNode, updateXPBarValues } from "../node";
 import { Easing, InterpolationData, createInterpolationData, interpolate } from "../interpolate";
+import { FrameMaterial, FrameQuality } from "../mirror";
 import { Scenes, setScene } from "../scene-manager";
 import { combat, combatRootId, prepareCombatScene, setupCombatScene } from "./combat";
-import { createBasicDialogEvent, createChoiceDialogEvent, createEventChoice, createOutcomeDialogEvent } from "./dialog";
+import { createChoiceDialogEvent, createEventChoice, createOutcomeDialogEvent } from "../room-events";
+import { eventSound, zzfxP } from "../zzfx";
 import { screenCenterX, screenCenterY, screenHeight, screenWidth } from "../screen";
 
+import { GemType } from "../ability";
 import { inputContext } from "../input";
+import { rand } from "../random";
 import { v2 } from "../v2";
 
 enum mode
 {
   Player,
-  Move,
+  NoAction,
   Triggers,
   Combat,
   Loot,
@@ -23,6 +27,7 @@ enum mode
 export let adventureRootId = -1;
 
 let restButtonId = -1;
+let sacrificeButtonId = -1;
 let leaveButtonId = -1;
 
 let healthAmountId = -1;
@@ -49,15 +54,7 @@ let cameraLERP: InterpolationData | null;
 let playerLERP: InterpolationData | null;
 let delayedTarget: v2 | null = null;
 let moneyLERP: InterpolationData | null;
-
-const currencies: Currencies = {
-  sand: 0,
-  glassFragments: 0,
-  brassFragments: 0,
-  steelFragments: 0,
-  silverFragments: 0,
-  goldFragments: 0,
-};
+let xpSmoothing: InterpolationData | null;
 
 const camera: v2 = [60 * 16, 31 * 16];
 const cameraSize: v2 = [41 * 16, 25 * 16];
@@ -79,9 +76,14 @@ export function setupAdventureScene()
   const sideBar = createWindowNode([488, 34], [150, screenHeight - 34]);
   addChildNode(adventureRootId, sideBar);
 
-  restButtonId = createButtonNode("rest", [142, 70], "hp for sanity (10%)");
+  restButtonId = createButtonNode("rest", [142, 70], "hp for sanity   (10% for 10%)");
   moveNode(restButtonId, [4, 4]);
   addChildNode(sideBar, restButtonId);
+
+  sacrificeButtonId = createButtonNode("bleed", [142, 70], "sanity for hp   (1 for 25%");
+  moveNode(sacrificeButtonId, [4, 84]);
+  node_enabled[sacrificeButtonId] = false;
+  addChildNode(sideBar, sacrificeButtonId);
 
   leaveButtonId = createButtonNode("retreat", [142, 70]);
   moveNode(leaveButtonId, [4, screenHeight - 34 - 70 - 4]);
@@ -191,48 +193,122 @@ export function setupAdventureScene()
 
   // Combat Window
   setupCombatScene();
-  combatWindowId = createWindowNode([20, 34], [screenWidth - 40, screenHeight - 68]);
+  combatWindowId = createWindowNode([155, 90], [330, 180]);
   addChildNode(adventureRootId, combatWindowId);
   addChildNode(combatWindowId, combatRootId);
   node_enabled[combatWindowId] = false;
 }
+
+let playerBonusLoot = 0;
+let playerSacrifice = 0;
 
 export function resetAdventureScene(): void
 {
   camera[0] = 60 * 16;
   camera[1] = 31 * 16;
 
-  currencies.sand = 0;
-  currencies.glassFragments = 0;
-  currencies.brassFragments = 0;
-  currencies.steelFragments = 0;
-  currencies.silverFragments = 0;
-  currencies.goldFragments = 0;
-
   animationTimer = 1;
   frame = "01";
+
+  playerBonusLoot = 0;
+  playerSacrifice = 0;
+  node_enabled[sacrificeButtonId] = false;
 
   cameraLERP = null;
   playerLERP = null;
   delayedTarget = null;
   moneyLERP = null;
+  xpSmoothing = null;
   game_mode = mode.Player;
+  levelUp = false
 }
 
 export function loadPlayerAbilities(): void
 {
-  // load loot bonuses
-
-  // do pride peeks
-
-
-  // Activate sacrifice button
+  switch (gameState.equippedMirror)
+  {
+    case FrameMaterial.Gold:
+    case FrameMaterial.Coil:
+      switch (gameState.mirrors[gameState.equippedMirror].frameQuality)
+      {
+        case FrameQuality.Tarnished:
+          playerBonusLoot += 0.05;
+          break;
+        case FrameQuality.Polished:
+          playerBonusLoot += 0.1;
+          break;
+        case FrameQuality.Pristine:
+          playerBonusLoot += 0.15;
+          break;
+        case FrameQuality.Ornate:
+          playerBonusLoot += 0.2;
+          break;
+      }
+      break;
+  }
+  for (const gem of [0, 1, 2, 3, 4, 5, 6])
+  {
+    if (!gameState.gems[gem as GemType].owned) { continue; }
+    switch (gem)
+    {
+      case GemType.Citrine:
+        switch (gameState.gems[gem].level)
+        {
+          case 1:
+            playerBonusLoot += 0.05;
+            break;
+          case 2:
+            playerBonusLoot += 0.1;
+            break;
+          case 3:
+            playerBonusLoot += 0.15;
+            break;
+          case 4:
+            playerBonusLoot += 0.2;
+            break;
+        }
+        break;
+      case GemType.Morganite:
+        switch (gameState.gems[gem].level)
+        {
+          case 1:
+            playerSacrifice = 0.25;
+            break;
+          case 2:
+            playerSacrifice = 0.20;
+            break;
+          case 3:
+            playerSacrifice = 0.15;
+            break;
+          case 4:
+            playerSacrifice = 0.1;
+            break;
+        }
+        node_enabled[sacrificeButtonId] = true;
+        node_second_text_line[sacrificeButtonId] = `sanity for hp   (1 for ${ playerSacrifice * 100 }%)`
+        break;
+      case GemType.Alexandrite:
+        let rooms = 1 + ((gameState.gems[gem].level - 1) * 2);
+        while (rooms > 0)
+        {
+          let x = rand(1, 9);
+          let y = rand(0, 7);
+          if (gameState.currentLevel.rooms[y * 10 + x]
+            && !gameState.currentLevel.rooms[y * 10 + x].peeked)
+          {
+            gameState.currentLevel.rooms[y * 10 + x].peeked = true;
+            rooms--;
+          }
+        }
+    }
+  }
 }
 
 let levelUp: boolean = false;
 export function adventure(now: number, delta: number): void
 {
   const player = gameState.player;
+  const currencies = gameState.currentLevel.currencies;
 
   animationTimer += delta;
   if (animationTimer > 500)
@@ -282,11 +358,26 @@ export function adventure(now: number, delta: number): void
     levelUpPlayer();
     levelUp = false;
   }
-  updateXPBarValues(xpBarId, player.xp / nextLevel(player.level));
-  if (player.xp / nextLevel(player.level) >= 1)
+
+  if (!xpSmoothing && player.xp / nextLevel(player.level) >= 1)
   {
     levelUp = true;
   }
+  else if (!xpSmoothing && player.xpPool >= 1)
+  {
+    player.xpPool -= 1;
+    xpSmoothing = createInterpolationData(200, [player.xp], [player.xp + 1])
+  }
+  else if (xpSmoothing)
+  {
+    let i = interpolate(now, xpSmoothing);
+    player.xp = i.values[0];
+    if (i.done)
+    {
+      xpSmoothing = null;
+    }
+  }
+  updateXPBarValues(xpBarId, player.xp / nextLevel(player.level));
   updateTextNode(levelAmountId, `${ player.level }`, 1, Align.Right);
 
   const cameraTopLeft: v2 = [camera[0] - cameraHalfW, camera[1] - cameraHalfH];
@@ -325,23 +416,41 @@ export function adventure(now: number, delta: number): void
       {
         const renderX = tileX * 16 - cameraTopLeft[0] - 8;
         const renderY = tileY * 16 - cameraTopLeft[1] - 12;
-        if (gameState.currentLevel?.tileMap[tileY * 110 + tileX] === 2)
-        {
-          pushSpriteAndSave("wall_02", renderX, renderY, wallColour[gameState.currentLevel.realm], 2, 2);
-        }
-        else if (gameState.currentLevel?.tileMap[tileY * 110 + tileX] === 5)
-        {
-          pushSpriteAndSave("floor_01", renderX, renderY, floorColour[gameState.currentLevel.realm], 2, 2);
-        }
-        else
-        {
-          pushSpriteAndSave("wall_01", renderX, renderY, 0xFFFFFFFF, 2, 2);
-        }
 
-        if (playerTileX == tileX && playerTileY == tileY)
+        let sprite = "wall_01";
+        let colour = wallColour[gameState.currentLevel.realm];
+        switch (gameState.currentLevel?.tileMap[tileY * 110 + tileX])
         {
-
+          case 2:
+            sprite = "wall_02";
+            colour = wallColour[gameState.currentLevel.realm];
+            break;
+          case 3:
+            sprite = "wall_03";
+            colour = wallColour[gameState.currentLevel.realm];
+            break;
+          case 4:
+            sprite = "wall_04";
+            colour = wallColour[gameState.currentLevel.realm];
+            break;
+          case 5:
+            sprite = "floor_01";
+            colour = floorColour[gameState.currentLevel.realm]
+            break;
+          case 6:
+            sprite = "floor_02";
+            colour = floorColour[gameState.currentLevel.realm]
+            break;
+          case 7:
+            sprite = "floor_03";
+            colour = floorColour[gameState.currentLevel.realm]
+            break;
+          case 8:
+            sprite = "floor_04";
+            colour = floorColour[gameState.currentLevel.realm]
+            break;
         }
+        pushSpriteAndSave(sprite, renderX, renderY, colour, 2, 2);
 
         // Lighting
         const distance = Math.sqrt((playerTileX - tileX) ** 2 + (playerTileY - tileY) ** 2);
@@ -379,7 +488,7 @@ export function adventure(now: number, delta: number): void
   }
   else if (playerRoom?.loot.length > 0)
   {
-    pushSpriteAndSave(`chest_closed`, renderX, renderY, 0xFFFFFFFF, 2, 2);
+    //pushSpriteAndSave(`chest_closed`, renderX, renderY, 0xFFFFFFFF, 2, 2);
   }
 
   for (let y = 0; y < 8; y++)
@@ -434,14 +543,33 @@ export function adventure(now: number, delta: number): void
   }
 
   const sane = player.sanity > 0;
+  const restable = player.health < player.maxHealth && player.sanity > Math.floor(player.maxSanity * 0.1);
+  const bleedable = player.sanity < player.maxSanity && playerSacrifice > 0;
 
-  node_enabled[restButtonId] = sane
+  node_enabled[restButtonId] = restable
+  node_enabled[sacrificeButtonId] = bleedable
 
   if (game_mode === mode.Player)
   {
     if (inputContext.fire === restButtonId)
     {
-
+      if (restable)
+      {
+        player.sanity -= Math.floor(player.maxSanity * 0.1);
+        player.health += Math.floor(player.maxHealth * 0.1);
+        if (player.health > player.maxHealth)
+        {
+          player.health = player.maxHealth;
+        }
+      }
+    }
+    else if (inputContext.fire === sacrificeButtonId)
+    {
+      if (bleedable)
+      {
+        player.sanity = Math.min(player.maxSanity, player.sanity + 1);
+        player.health = Math.max(0, player.health - Math.ceil(player.maxHealth * playerSacrifice));
+      }
     }
     else if (inputContext.fire === leaveButtonId)
     {
@@ -479,6 +607,24 @@ export function adventure(now: number, delta: number): void
         const no = createEventChoice("no", () => { });
         gameState.currentEvent = createChoiceDialogEvent([yes, no], "Retreat from the dungeon and keep 50% of what you've found?", 1000);
       }
+    }
+
+    if (player.health <= 0)
+    {
+      gameState.currentEvent = createOutcomeDialogEvent(
+        () =>
+        {
+          gameState.currencies.sand += Math.ceil(currencies.sand * 0.3);
+          gameState.currencies.glassFragments += Math.ceil(currencies.glassFragments * 0.3);
+          gameState.currencies.brassFragments += Math.ceil(currencies.brassFragments * 0.3);
+          gameState.currencies.steelFragments += Math.ceil(currencies.steelFragments * 0.3);
+          gameState.currencies.silverFragments += Math.ceil(currencies.silverFragments * 0.3);
+          gameState.currencies.goldFragments += Math.ceil(currencies.goldFragments * 0.3);
+
+          setScene(Scenes.Camp);
+        },
+        "You have fallen and will return to camp with 30% of what you found.", 1000);
+      game_mode = mode.NoAction;
     }
 
     node_enabled[directionUpId] = sane && (gameState.currentLevel.tileMap[(playerTileY - 9) * 110 + playerTileX] || 0) > 0;
@@ -523,7 +669,7 @@ export function adventure(now: number, delta: number): void
 
       const targetRoom: v2 = [Math.floor(target[0] / 16 / 11), Math.floor(target[1] / 16 / 9)]
       const room = gameState.currentLevel.rooms[targetRoom[1] * 10 + targetRoom[0]]
-      if (room?.loot.length === 0 && room?.enemy === null && room?.events.length === 0)
+      if (room?.enemy === null)
       {
         target = [...delayedTarget];
         delayedTarget = null;
@@ -533,10 +679,10 @@ export function adventure(now: number, delta: number): void
       {
         game_mode = mode.Triggers;
       });
-      game_mode = mode.Move;
+      game_mode = mode.NoAction;
     }
   }
-  else if (game_mode === mode.Move) { }
+  else if (game_mode === mode.NoAction) { }
   else if (game_mode === mode.Triggers)
   {
     if (playerRoom.enemy)
@@ -563,22 +709,22 @@ export function adventure(now: number, delta: number): void
           switch (loot.type)
           {
             case LootType.Sand:
-              target[0] += loot.amount;
+              target[0] += Math.ceil(loot.amount * (1 + playerBonusLoot));
               break;
             case LootType.Glass:
-              target[1] += loot.amount;
+              target[1] += Math.ceil(loot.amount * (1 + playerBonusLoot));
               break;
             case LootType.Brass:
-              target[2] += loot.amount;
+              target[2] += Math.ceil(loot.amount * (1 + playerBonusLoot));
               break;
             case LootType.Steel:
-              target[3] += loot.amount;
+              target[3] += Math.ceil(loot.amount * (1 + playerBonusLoot));
               break;
             case LootType.Silver:
-              target[4] += loot.amount;
+              target[4] += Math.ceil(loot.amount * (1 + playerBonusLoot));
               break;
             case LootType.Gold:
-              target[5] += loot.amount;
+              target[5] += Math.ceil(loot.amount * (1 + playerBonusLoot));
               break;
           }
         }
@@ -600,6 +746,10 @@ export function adventure(now: number, delta: number): void
     else
     {
       gameState.currentEvent = playerRoom?.events.shift() ?? null;
+      if (gameState.currentEvent)
+      {
+        zzfxP(eventSound);
+      }
       game_mode = mode.Events;
     }
   }
@@ -611,6 +761,7 @@ export function adventure(now: number, delta: number): void
     {
       playerRoom.enemy = null;
       node_enabled[combatWindowId] = false;
+
       if (player.health <= 0)
       {
         gameState.currentEvent = createOutcomeDialogEvent(
@@ -625,11 +776,29 @@ export function adventure(now: number, delta: number): void
 
             setScene(Scenes.Camp);
           },
-          "You have fallen in battle and will return to camp with 30% of what you found.", 1000);
-        game_mode = mode.Move;
+          "You have fallen and will return to camp with 30% of what you found.", 1000);
+        game_mode = mode.NoAction;
       }
       else
       {
+        if (playerRoom.exit)
+        {
+          levelUpGem();
+
+          if (gameState.currentLevel.difficulty === 3)
+          {
+            gameState.flags["clear_3_star"] = true
+          }
+          else if (gameState.currentLevel.difficulty === 5)
+          {
+            gameState.flags["clear_5_star"] = true
+          }
+          else if (gameState.currentLevel.difficulty === 7)
+          {
+            gameState.flags["clear_7_star"] = true
+          }
+          // TODO(dbrad): Set clear flags
+        }
         game_mode = mode.Triggers;
       }
     }
@@ -658,7 +827,7 @@ export function adventure(now: number, delta: number): void
     {
       if (delayedTarget)
       {
-        game_mode = mode.Move;
+        game_mode = mode.NoAction;
 
         playerLERP = createInterpolationData(100, gameState.currentLevel.playerPosition, delayedTarget, Easing.Linear, () =>
         {

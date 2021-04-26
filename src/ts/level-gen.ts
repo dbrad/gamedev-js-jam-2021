@@ -1,8 +1,9 @@
-import { AbilityType, Boss, LootType, Room, gameState } from "./gamestate";
+import { Boss, LootType, Room, fragPerLevel, gameState, moneyPerLevel } from "./gamestate";
+import { createBasicDialogEvent, getRandomChoiceEvent, getRandomOutcomeEvent } from "./room-events";
 import { rand, shuffle } from "./random";
 
+import { AbilityType } from "./ability";
 import { assert } from "./debug";
-import { createBasicDialogEvent } from "./scenes/dialog";
 
 //#region Level Gen
 const base_room =
@@ -44,6 +45,24 @@ const realmToAbility = {
   [Boss.Pride]: AbilityType.Disable,
 }
 
+let wallDeck: number[] = [];
+function getNextWall(): number
+{
+  if (wallDeck.length === 0)
+  {
+    wallDeck = shuffle([2, 2, 2, 3, 4]);
+  }
+  return wallDeck.pop() ?? 2;
+}
+let floorDeck: number[] = [];
+function getNextFloor(): number
+{
+  if (floorDeck.length === 0)
+  {
+    floorDeck = shuffle([5, 5, 5, 5, 5, 5, 5, 6, 6, 7, 8]);
+  }
+  return floorDeck.pop() ?? 5;
+}
 export function setDifficulty(d: number)
 {
   difficulty = d;
@@ -139,10 +158,22 @@ export function generateLevel(): void
           for (let tx = 0; tx < roomWidth; tx++)
           {
             const index = ((y + ty) * tileMapWidth) + (x + tx);
-            tileMap[index] = base_room[ty * roomWidth + tx];
+            if (base_room[ty * roomWidth + tx] === 2)
+            {
+              tileMap[index] = getNextWall();
+            }
+            else if (base_room[ty * roomWidth + tx] === 5)
+            {
+              tileMap[index] = getNextFloor();
+            }
+            else
+            {
+              tileMap[index] = base_room[ty * roomWidth + tx];
+            }
           }
         }
 
+        // check for door to north
         if (roomLayout[roomIndex - 10] === 1) 
         {
           const nx = x + north_door[0];
@@ -150,6 +181,8 @@ export function generateLevel(): void
           const index = ny * tileMapWidth + nx;
           tileMap[index] = 5;
         }
+
+        // check for door to east
         if (roomLayout[roomIndex + 1] === 1)
         {
           const nx = x + east_door[0];
@@ -157,8 +190,9 @@ export function generateLevel(): void
           const index = ny * tileMapWidth + nx;
           tileMap[index] = 5;
           tileMap[index - 110] = 2;
-
         }
+
+        // check for door to south
         if (roomLayout[roomIndex + 10] === 1)
         {
           const nx = x + south_door[0];
@@ -166,6 +200,8 @@ export function generateLevel(): void
           const index = ny * tileMapWidth + nx;
           tileMap[index] = 5;
         }
+
+        // check for door to west
         if (roomLayout[roomIndex - 1] === 1)
         {
           const nx = x + west_door[0];
@@ -211,7 +247,15 @@ export function generateLevel(): void
     realm,
     playerPosition: [60 * 16, 31 * 16],
     tileMap: tileMap,
-    rooms: rooms
+    rooms: rooms,
+    currencies: {
+      sand: 0,
+      glassFragments: 0,
+      brassFragments: 0,
+      steelFragments: 0,
+      silverFragments: 0,
+      goldFragments: 0,
+    }
   };
 }
 
@@ -270,36 +314,6 @@ function createRoomDeck(numberOfRooms: number, numberOfDeadEnds: number): Room[]
   return roomDeck;
 }
 
-const moneyPerLevel = [
-  0,
-  15,
-  50,
-  145,
-  330,
-  635,
-  1090,
-  1725,
-  2570,
-  3655,
-  5010,
-  6665,
-] as const;
-
-const fragPerLevel = [
-  0,
-  5,
-  12,
-  25,
-  42,
-  65,
-  92,
-  125,
-  162,
-  205,
-  252,
-  305,
-] as const;
-
 function getNextFragment(): LootType
 {
   if (fragmentDeck.length === 0)
@@ -327,9 +341,9 @@ function createBossRoom(numberOfRooms: number): Room
   const money = Math.ceil((moneyPerLevel[difficulty] * 0.3));
   const frag = Math.ceil((fragPerLevel[difficulty] * 0.3));
 
-  const hp = rand(15 * difficulty, 20 * difficulty);
-  const atk = rand(difficulty, 3 * difficulty);
-  const def = rand(difficulty, 3 * difficulty);
+  const hp = rand(5 + difficulty, 10 + difficulty);
+  const atk = rand(1, difficulty);
+  const def = rand(1, difficulty);
   const spd = rand(5, 5 * difficulty);
 
   const abl: [AbilityType, number][] = [];
@@ -394,7 +408,7 @@ function createChoiceRoom(numberOfRooms: number): Room
     exit: false,
     loot: [],
     events: [
-      createBasicDialogEvent("Wow something will happen here!")
+      getRandomChoiceEvent()
     ]
   }
 }
@@ -408,7 +422,7 @@ function createBoonCurseRoom(numberOfRooms: number): Room
     exit: false,
     loot: [],
     events: [
-      createBasicDialogEvent("Wow something will happen here!")
+      getRandomOutcomeEvent()
     ]
   }
 }
@@ -418,8 +432,8 @@ function createCombatRoom(numberOfRooms: number): Room
   const money = Math.ceil((moneyPerLevel[difficulty] * 0.7) / (numberOfRooms - 1));
   const frag = Math.ceil((fragPerLevel[difficulty] * 0.7) / (numberOfRooms - 1));
 
-  const hp = rand(3 * difficulty, 5 * difficulty);
-  const atk = rand(difficulty, 2 * difficulty);
+  const hp = rand(4 + difficulty, 8 + difficulty);
+  const atk = rand(1, difficulty);
   const def = rand(0, difficulty);
   const spd = rand(0, 2 * difficulty);
 

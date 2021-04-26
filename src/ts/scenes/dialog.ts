@@ -1,8 +1,8 @@
 import { Align, pushQuad, pushText } from "../draw";
-import { DialogEvent, EventChoice, EventType, gameState } from "../gamestate";
 import { addChildNode, createButtonNode, createNode, createWindowNode, moveNode, node_enabled, node_size, node_text, node_visible } from "../node";
 import { screenCenterX, screenCenterY, screenHeight, screenWidth } from "../screen";
 
+import { gameState } from "../gamestate";
 import { inputContext } from "../input";
 
 export let dialogSystemRootId = -1;
@@ -129,42 +129,4 @@ function showDialog(text: string, duration: number, now: number, speaker: string
     pushText(text, 8, 248, { wrap: 624, colour: 0xFFCCCCCC, scale: 2 });
     pushText("touch to continue", 630, 345, { textAlign: Align.Right, colour: 0xFFCCCCCC, scale: 1 });
   }
-}
-
-export function createBasicDialogEvent(dialog: string, dialogTime = 3000): DialogEvent
-{
-  return {
-    type: EventType.Dialog,
-    dialog: dialog,
-    dialogTime: dialogTime,
-    choices: [],
-    outcome: null
-  };
-}
-
-export function createEventChoice(label: string, outcome: () => void): EventChoice
-{
-  return { label, outcome };
-}
-
-export function createChoiceDialogEvent(choices: EventChoice[], dialog: string, dialogTime = 3000): DialogEvent
-{
-  return {
-    type: EventType.Choice,
-    dialog: dialog,
-    dialogTime: dialogTime,
-    choices: choices,
-    outcome: null
-  };
-}
-
-export function createOutcomeDialogEvent(outcome: () => void, dialog: string, dialogTime = 3000): DialogEvent
-{
-  return {
-    type: EventType.Outcome,
-    dialog: dialog,
-    dialogTime: dialogTime,
-    choices: [],
-    outcome: outcome
-  };
 }

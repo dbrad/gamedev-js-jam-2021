@@ -138,10 +138,27 @@ const RatingToString: { [index: number]: string } = {
   7: "S+",
 }
 
-export function getDescription(mirror: Mirror): string[]
+export function getSummaryText(mirror: Mirror): string
 {
-  const statRating = MirrorStatRatings[mirror.material];
+  let text = "";
+  if (mirror.material === FrameMaterial.Coil || mirror.material === FrameMaterial.Gold)
+  {
+    text = "Focused on looting and exploring."
+  } else if (mirror.material === FrameMaterial.Brass)
+  {
+    text = "Overall balanced stats."
+  } else if (mirror.material === FrameMaterial.Silver)
+  {
+    text = "Focused on aggressively attacking."
+  } else if (mirror.material === FrameMaterial.Steel)
+  {
+    text = "Focused on defense and surviving."
+  }
+  return text;
+}
 
+export function getSpecialText(mirror: Mirror): string
+{
   let speical = "";
   if (mirror.material === FrameMaterial.Coil || mirror.material === FrameMaterial.Gold)
   {
@@ -151,13 +168,22 @@ export function getDescription(mirror: Mirror): string[]
     speical = "Recieve more expierence from combat."
   } else if (mirror.material === FrameMaterial.Silver)
   {
-    speical = "Periodically attack an additional time."
+    speical = "Periodically attack an extra time."
   } else if (mirror.material === FrameMaterial.Steel)
   {
     speical = "Attacking enemies recieve damage."
   }
+  return speical;
+}
+
+export function getDescription(mirror: Mirror): string[]
+{
+  const statRating = MirrorStatRatings[mirror.material];
+
+  const speical = getSpecialText(mirror);
 
   return [
+    getMirrorName(mirror),
     `health:  ${ RatingToString[statRating.health + (mirror.quality)] }   sanity:  ${ RatingToString[statRating.sanity + (mirror.quality)] }`,
     `attack:  ${ RatingToString[statRating.attack + (mirror.quality)] }   defense: ${ RatingToString[statRating.defense + (mirror.quality)] }`,
     `attack speed:  ${ RatingToString[statRating.attackSpeed + (mirror.quality)] }`,
@@ -197,21 +223,21 @@ export function getStatIncreaseForMirror(mirror: Mirror): RawStats
   }
 }
 
-export const craftCost: [number, number] = [300, 50]
+export const craftCost: [number, number] = [100, 20]
 
 export function costForNextLevel(quality: number): number[]
 {
   if (quality === 0)
   {
-    return [625, 125];
+    return [300, 50];
   }
   else if (quality === 1)
   {
-    return [1750, 250];
+    return [600, 100];
   }
   else if (quality === 2)
   {
-    return [3750, 400];
+    return [1200, 200];
   }
   return [-1, -1];
 }

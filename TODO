@@ -1,25 +1,14 @@
-- Level gen
-  - Store colours for level
+- Page to show gem levels!!!!!
 
-- Currency Display at camp
+- Save file system
+  - Import / Export
 
-- Add Abilities To Combat - IN PROGRESS
-  - Copy
-  - Disable
-  - Pacify
-  - Steal
-  - Add bars for timers
-  - Add names for actives and passives
-  - Rework the combat window layout a bit (shrink)
+- Sounds effects!
+  - zzfx.ts
 
-- Crafting / Upgrade system (smithing) - IN PROGRESS
-  - all ui elements are in
-  - need logic and layout
+- Muuuusic!!!
+  - music.ts
 
-- Gem Select
-  - Need to figure out a system here
-  - Player can pick 1 gem for each level of the frame
-  - select / deselect + go button?
 
 - add tutorial flow
   - some intro dialog from the smith
@@ -33,20 +22,8 @@
   - first time text in smithy
   - thank you text first time seeing coil mirror
 
-- Make a collection of reusable events to add to event rooms
-  - trip - lose 10% hp
-  - healing spring - gain 10% hp
-  - forboding inscription - lose 1 sanity
-  - enlightening mural - gain 1 sanity
-  - misfortune - lose 10% of a random loot you have
-  - fortune - gain 10x difficulty of a random fragment?
-  - trade - player sand for random frag (2 to 1, up to 50% of players sand), if player has 1 or less sand tells them to scram
-  - trade - player frag for sand (1 to 3)?
-  - Doulbe or nothing - bet all of your sand on a 50/50 bet, or don't
-  - flip a coin, if player is right, get 10xdiff sand
-
-- alternate walls and floors
-
+CONTENT NOTES
+----------------
 - Gems for Abilities
   - Envy's Emerald - Bonus XP (5%, 10%, 15%, 20%)
   - Greed's Citrine - Bonus Loot (5%, 10%, 15%, 20%)
@@ -54,7 +31,7 @@
   - Gluttony's Fire Opal - Periodically Self-Heal 5% during combat (Shorter cooldown 2500, 2000, 1500, 1000)
   - Sloth's Sapphire - Reflect (5, 10, 15, 20% of def to attackers)
   - Wrath's Ruby - Double Attack on next attack when ready (Shorter cooldown 3000, 2500, 2000, 1500)
-  - Pride's Alexandrite - Reveal random rooms at start of level? (3, 5, 7, 9)
+  - Pride's Alexandrite - Reveal random rooms at start of level? (1, 3, 5, 7)
 
 - Boss Abilties
   - Envy - Copy - Copies an ability until the next cast of this.
@@ -65,16 +42,6 @@
   - Wrath - Double Strike - Double Strike on cooldown 
   - Pride - Disable - Periodically disabled 1 of your abilities (Forces the counter to 0 until the next cast of this)
 
-- Save file system
-  - File picker
-  - Continue Button
-  - Hide Continue if no files found
-
-- xp smoothing
-
-- Sounds effects!
-
-- Muuuusic!!!
 
 - Obsidian  = No Stamina, Balanced Stats, Threat Level +1
   - D => C => B => A for all stats

@@ -2,11 +2,12 @@ import { Scenes, setScene } from "../scene-manager";
 import { addChildNode, createButtonNode, createNode, moveNode, node_enabled, node_size, node_visible } from "../node";
 import { gameState, resetPlayer } from "../gamestate";
 import { generateLevel, setDifficulty } from "../level-gen";
+import { loadPlayerAbilities, resetAdventureScene } from "./adventure";
 import { screenHeight, screenWidth } from "../screen";
 
 import { arrangeMirrors } from "./mirror-select";
+import { gl_setClear } from "../gl";
 import { inputContext } from "../input";
-import { resetAdventureScene } from "./adventure";
 
 export let missionSelectRootId = -1;
 
@@ -67,6 +68,7 @@ export function setupMissionSelect(): void
 
 export function arrangeMissionSelect(): void
 {
+  gl_setClear(0, 0, 0);
   if (gameState.flags["clear_7_star"])
   {
     moveNode(select1StarId, [38, 60]);
@@ -259,8 +261,9 @@ export function missionSelect(now: number, delta: number): void
       else
       {
         generateLevel();
-        resetAdventureScene();
         resetPlayer();
+        resetAdventureScene();
+        loadPlayerAbilities();
         setScene(Scenes.Adventure);
       }
     }

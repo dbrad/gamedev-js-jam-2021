@@ -15,3 +15,8 @@ export function loadObject(key: string): Object
   const json = atob(b64);
   return JSON.parse(json);
 }
+
+export function hasObject(key: string): boolean
+{
+  return (window.localStorage.getItem(key) !== null);
+}

@@ -1,5 +1,9 @@
+import { AbilityType, Gem, GemType } from "./ability"
 import { FrameMaterial, FrameQuality, Mirror, MirrorQuality, getBaseStatsForMirror, getStatIncreaseForMirror } from "./mirror"
+import { levelUp, zzfxP } from "./zzfx"
+import { loadObject, saveObject } from "./storage"
 
+import { DialogEvent } from "./room-events"
 import { InterpolationData } from "./interpolate"
 import { v2 } from "./v2"
 
@@ -12,6 +16,15 @@ export type Currencies = {
   goldFragments: number,
 }
 
+export const CurrencyKeys: (keyof Currencies)[] = [
+  "sand",
+  "glassFragments",
+  "brassFragments",
+  "steelFragments",
+  "silverFragments",
+  "goldFragments",
+];
+
 export enum Boss
 {
   Greed = 1,
@@ -23,42 +36,10 @@ export enum Boss
   Pride
 }
 
-export enum AbilityType
-{
-  BonusXp,
-  Copy,
-  BonusLoot,
-  Steal,
-  Sacrifice,
-  Pacify,
-  Heal,
-  Reflect,
-  DoubleStrike,
-  RevealMap,
-  Disable
-}
-
-export enum GemType
-{
-  Emerald,
-  Citrine,
-  Morganite,
-  FireOpal,
-  Sapphire,
-  Ruby,
-  Alexandrite
-}
-export type Gem = {
-  abilitiyType: AbilityType,
-  type: GemType,
-  colour: number,
-  owned: boolean,
-  level: number
-}
-
 type Player = {
   level: number,
   xp: number,
+  xpPool: number,
   health: number,
   maxHealth: number,
   sanity: number,
@@ -91,24 +72,6 @@ type Loot = {
   amount: number
 }
 
-export type EventChoice = {
-  label: string,
-  outcome: () => void
-}
-export enum EventType
-{
-  Dialog,
-  Choice,
-  Outcome
-}
-export type DialogEvent = {
-  type: EventType,
-  dialog: string,
-  dialogTime: number,
-  choices: EventChoice[],
-  outcome: (() => void) | null
-}
-
 export type Room = {
   seen: boolean,
   peeked: boolean,
@@ -123,23 +86,39 @@ type Level = {
   tileMap: Int8Array,
   playerPosition: v2,
   rooms: Room[],
+  currencies: Currencies
 }
 const nullLevel: Level = {
   difficulty: 0,
   realm: Boss.Greed,
   tileMap: new Int8Array(),
   playerPosition: [0, 0],
-  rooms: []
+  rooms: [],
+  currencies: {
+    sand: 0,
+    glassFragments: 0,
+    brassFragments: 0,
+    steelFragments: 0,
+    silverFragments: 0,
+    goldFragments: 0,
+  }
+};
+
+export const frameMetalFragment: { [key in FrameMaterial]: keyof Currencies } =
+{
+  [FrameMaterial.Coil]: "goldFragments",
+  [FrameMaterial.Brass]: "brassFragments",
+  [FrameMaterial.Steel]: "steelFragments",
+  [FrameMaterial.Silver]: "silverFragments",
+  [FrameMaterial.Gold]: "goldFragments"
 };
 
 type GameState = {
-  file: number,
   timestamp: Date,
   player: Player,
   equippedMirror: FrameMaterial,
   mirrors: { [key in FrameMaterial]: Mirror },
   currencies: Currencies,
-  equipedGems: GemType[],
   gems: { [key in GemType]: Gem },
   realmDeck: Boss[],
   currentLevel: Level,
@@ -147,12 +126,13 @@ type GameState = {
   transition: InterpolationData | null,
   flags: { [index: string]: boolean }
 }
-export const gameState: GameState = {
-  file: -1,
-  timestamp: new Date,
+
+export let gameState: GameState = {
+  timestamp: new Date(),
   player: {
     level: 1,
     xp: 0,
+    xpPool: 0,
     health: 20,
     maxHealth: 20,
     sanity: 10,
@@ -202,7 +182,6 @@ export const gameState: GameState = {
     silverFragments: 0,
     goldFragments: 0,
   },
-  equipedGems: [],
   gems: {
     [GemType.Emerald]: {
       type: GemType.Emerald,
@@ -262,9 +241,6 @@ export const gameState: GameState = {
     "clear_3_star": false,
     "clear_5_star": false,
     "clear_7_star": false,
-    "clear_8_obs": false,
-    "clear_9_obs": false,
-    "clear_10_obs": false,
     "clear_input": false,
     "tutorial_01": false,
     "tutorial_02": false,
@@ -274,10 +250,169 @@ export const gameState: GameState = {
   }
 }
 
+export function resetGameState(): void
+{
+  gameState = {
+    timestamp: new Date(),
+    player: {
+      level: 1,
+      xp: 0,
+      xpPool: 0,
+      health: 20,
+      maxHealth: 20,
+      sanity: 10,
+      maxSanity: 10,
+      attack: 2,
+      defense: 2,
+      attackSpeed: 100,
+    },
+    equippedMirror: FrameMaterial.Brass,
+    mirrors: {
+      [FrameMaterial.Coil]: {
+        owned: false,
+        material: FrameMaterial.Coil,
+        frameQuality: FrameQuality.Tarnished,
+        quality: MirrorQuality.Shattered
+      },
+      [FrameMaterial.Brass]: {
+        owned: true,
+        material: FrameMaterial.Brass,
+        frameQuality: FrameQuality.Tarnished,
+        quality: MirrorQuality.Shattered
+      },
+      [FrameMaterial.Steel]: {
+        owned: false,
+        material: FrameMaterial.Steel,
+        frameQuality: FrameQuality.Tarnished,
+        quality: MirrorQuality.Shattered
+      },
+      [FrameMaterial.Silver]: {
+        owned: false,
+        material: FrameMaterial.Silver,
+        frameQuality: FrameQuality.Tarnished,
+        quality: MirrorQuality.Shattered
+      },
+      [FrameMaterial.Gold]: {
+        owned: false,
+        material: FrameMaterial.Gold,
+        frameQuality: FrameQuality.Tarnished,
+        quality: MirrorQuality.Shattered
+      }
+    },
+    currencies: {
+      sand: 0,
+      glassFragments: 0,
+      brassFragments: 0,
+      steelFragments: 0,
+      silverFragments: 0,
+      goldFragments: 0,
+    },
+    gems: {
+      [GemType.Emerald]: {
+        type: GemType.Emerald,
+        colour: 0xFF00FF00,
+        owned: false,
+        level: 1,
+        abilitiyType: AbilityType.BonusXp
+      },
+      [GemType.Citrine]: {
+        type: GemType.Citrine,
+        colour: 0xFF00FFFF,
+        owned: false,
+        level: 1,
+        abilitiyType: AbilityType.BonusLoot
+      },
+      [GemType.Morganite]: {
+        type: GemType.Morganite,
+        colour: 0xFF0000FF,
+        owned: false,
+        level: 1,
+        abilitiyType: AbilityType.Sacrifice
+      },
+      [GemType.FireOpal]: {
+        type: GemType.FireOpal,
+        colour: 0xFF00FF00,
+        owned: false,
+        level: 1,
+        abilitiyType: AbilityType.Heal
+      },
+      [GemType.Sapphire]: {
+        type: GemType.Sapphire,
+        colour: 0xFF00FF00,
+        owned: false,
+        level: 1,
+        abilitiyType: AbilityType.Reflect
+      },
+      [GemType.Ruby]: {
+        type: GemType.Ruby,
+        colour: 0xFF00FF00,
+        owned: false,
+        level: 1,
+        abilitiyType: AbilityType.DoubleStrike
+      },
+      [GemType.Alexandrite]: {
+        type: GemType.Alexandrite,
+        colour: 0xFFFF00FF,
+        owned: false,
+        level: 1,
+        abilitiyType: AbilityType.RevealMap
+      }
+    },
+    realmDeck: [],
+    currentLevel: nullLevel,
+    currentEvent: null,
+    transition: null,
+    flags: {
+      "clear_3_star": false,
+      "clear_5_star": false,
+      "clear_7_star": false,
+      "clear_8_obs": false,
+      "clear_9_obs": false,
+      "clear_10_obs": false,
+      "clear_input": false,
+      "tutorial_01": false,
+      "tutorial_02": false,
+      "tutorial_03": false,
+      "tutorial_04": false,
+      "tutorial_05": false,
+    }
+  };
+}
+
+export function saveGameState(): void
+{
+  gameState.timestamp = new Date();
+  const save = JSON.parse(JSON.stringify(gameState,
+    (key: string, value: any) =>
+    {
+      if (key == "currentLevel") return undefined;
+      else if (key == "currentEvent") return undefined;
+      else if (key == "player") return undefined;
+      else if (key == "transition") return undefined;
+      else return value;
+    }));
+  saveObject("f1", save);
+}
+
+export function loadGameState(): void
+{
+  const saveFile = loadObject("f1") as GameState;
+  gameState.timestamp = saveFile.timestamp;
+  gameState.equippedMirror = saveFile.equippedMirror;
+  gameState.mirrors = saveFile.mirrors;
+  gameState.currencies = saveFile.currencies;
+  gameState.gems = saveFile.gems;
+  gameState.realmDeck = saveFile.realmDeck;
+  gameState.flags = saveFile.flags;
+}
+
+/////////////////////////////////////////////////////
+
 export function resetPlayer(): void
 {
   const stats = getBaseStatsForMirror(gameState.mirrors[gameState.equippedMirror]);
   gameState.player.xp = 0;
+  gameState.player.xpPool = 0;
   gameState.player.level = 1;
   gameState.player.maxHealth = stats.health;
   gameState.player.maxSanity = stats.sanity;
@@ -293,8 +428,9 @@ export function levelUpPlayer(): void
   const player = gameState.player;
   if (player.xp >= nextLevel(player.level))
   {
+    zzfxP(levelUp);
     player.xp -= nextLevel(player.level);
-    player.level++;
+    player.level += 1;
     const stats = getStatIncreaseForMirror(gameState.mirrors[gameState.equippedMirror]);
     gameState.player.maxHealth += stats.health;
     gameState.player.health += stats.health;
@@ -313,38 +449,115 @@ export function nextLevel(level: number): number
   return Math.round(0.04 * (level ** 3) + 0.8 * (level ** 2) + 2 * level)
 }
 
-// TODO(dbrad): Wall tones
+/////////////////////////////////////////////////////
+
+export const moneyPerLevel = [
+  0,
+  15,
+  50,
+  145,
+  330,
+  635,
+  1090,
+  1725,
+  2570,
+  3655,
+  5010,
+  6665,
+] as const;
+
+export const fragPerLevel = [
+  0,
+  5,
+  12,
+  25,
+  42,
+  65,
+  92,
+  125,
+  162,
+  205,
+  252,
+  305,
+] as const;
+
 export const wallColour = [
   0xFFFFFFFF,
-  0xFF00FF00,
-  0xFF00FFFF,
-  0xFFFFFFFF,
-  0xFFFFFFFF,
-  0xFFFFFFFF,
-  0xFFFFFFFF,
-  0xFFFFFFFF,
+  0xFF78c850, // Green - 50c878
+  0xFF0ad0e4, // Yellow - e4d00a 
+  0xFFeb76ff, // Pink - ff76eb
+  0xFF3767ff, // Orange - #ff6737
+  0xFFba520f, // Blue - 0f52ba 
+  0xFF1e119b, // Red - 9b111e
+  0xFF813854, // Violet - 543881
 ];
 
-// TODO(dbrad): Floor tones
 export const floorColour = [
   0xFFFFFFFF,
-  0xFF00FF00,
-  0xFF00FFFF,
-  0xFFFFFFFF,
-  0xFFFFFFFF,
-  0xFFFFFFFF,
-  0xFFFFFFFF,
-  0xFFFFFFFF,
+  0xFFEEFFEE, // Green - 50c878
+  0xFFEEFFFF, // Yellow - 
+  0xFFEEDDFF, // Pink - 
+  0xFFAACCFF, // Orange
+  0xFFFFEEEE, // Blue
+  0xFFEEEEFF, // Red
+  0xFFFFEEFF, // Violet
 ];
 
-// TODO(dbrad): Enemy tones
 export const enemyColour = [
   0xFFFFFFFF,
-  0xFF00FF00,
-  0xFF00FFFF,
-  0xFFFFFFFF,
-  0xFFFFFFFF,
-  0xFFFFFFFF,
-  0xFFFFFFFF,
-  0xFFFFFFFF,
+  0xFF78c850, // Green - 50c878
+  0xFF0ad0e4, // Yellow - e4d00a 
+  0xFFeb76ff, // Pink - ff76eb
+  0xFF3767ff, // Orange - #ff6737
+  0xFFba520f, // Blue - 0f52ba 
+  0xFF1e119b, // Red - 9b111e
+  0xFF813854, // Violet - 543881
 ];
+
+/////////////////////////////////////////////////////
+
+export function levelUpGem(): void
+{
+  let gemType: GemType;
+  switch (gameState.currentLevel.realm)
+  {
+    case Boss.Envy:
+      gemType = GemType.Emerald;
+      break;
+    case Boss.Greed:
+      gemType = GemType.Citrine;
+      break;
+    case Boss.Lust:
+      gemType = GemType.Morganite;
+      break;
+    case Boss.Gluttony:
+      gemType = GemType.FireOpal;
+      break;
+    case Boss.Sloth:
+      gemType = GemType.Sapphire;
+      break;
+    case Boss.Wrath:
+      gemType = GemType.Ruby;
+      break;
+    case Boss.Pride:
+      gemType = GemType.Alexandrite;
+      break;
+  }
+  const gem = gameState.gems[gemType];
+  if (!gem.owned)
+  {
+    gem.owned = true;
+  }
+  else if (gem.level === 1 && gameState.currentLevel.difficulty > 7)
+  {
+    gem.level = 2;
+  }
+  else if (gem.level === 2 && gameState.currentLevel.difficulty > 8)
+  {
+    gem.level = 3;
+  }
+  else if (gem.level === 3 && gameState.currentLevel.difficulty > 9)
+  {
+    gem.level = 4;
+  }
+}

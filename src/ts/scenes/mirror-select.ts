@@ -2,12 +2,12 @@ import { FrameMaterial, Mirror, frameMatSprite, getDescription, getMirrorName } 
 import { Scenes, setScene } from "../scene-manager";
 import { addChildNode, createButtonNode, createNode, createSprite, createTextNode, createWindowNode, moveNode, node_colour, node_enabled, node_interactive, node_size, node_visible, updateTextNode } from "../node";
 import { gameState, resetPlayer } from "../gamestate";
+import { loadPlayerAbilities, resetAdventureScene } from "./adventure";
 import { screenHeight, screenWidth } from "../screen";
 
 import { Align } from "../draw";
 import { generateLevel } from "../level-gen";
 import { inputContext } from "../input";
-import { resetAdventureScene } from "./adventure";
 
 export let mirrorSelectRootId = -1;
 
@@ -68,33 +68,33 @@ function createMirrorInfoPanel(mirror: Mirror): number[]
   node_interactive[sprite] = false;
   addChildNode(root, sprite);
 
-  const frameName = createTextNode(getMirrorName(mirror), 1);
+  const description = getDescription(mirror);
+  const frameName = createTextNode(description[0], 1);
   moveNode(frameName, [60, 4]);
   node_interactive[frameName] = false;
   addChildNode(root, frameName);
 
-  const description = getDescription(mirror);
-  const statLine1 = createTextNode(description[0], 1);
+  const statLine1 = createTextNode(description[1], 1);
   moveNode(statLine1, [60, 18]);
   node_interactive[statLine1] = false;
   addChildNode(root, statLine1);
 
-  const statLine2 = createTextNode(description[1], 1);
+  const statLine2 = createTextNode(description[2], 1);
   moveNode(statLine2, [60, 28]);
   node_interactive[statLine2] = false;
   addChildNode(root, statLine2);
 
-  const statLine3 = createTextNode(description[2], 1);
+  const statLine3 = createTextNode(description[3], 1);
   moveNode(statLine3, [60, 38]);
   node_interactive[statLine3] = false;
   addChildNode(root, statLine3);
 
-  const special = createTextNode(description[3], 1, Align.Left, 0xFF888888);
+  const special = createTextNode(description[4], 1, Align.Left, 0xFF888888);
   moveNode(special, [60, 48]);
   node_interactive[special] = false;
   addChildNode(root, special);
 
-  return [root, statLine1, statLine2, statLine3, special];
+  return [root, frameName, statLine1, statLine2, statLine3, special];
 }
 
 export function arrangeMirrors(): void
@@ -107,7 +107,7 @@ export function arrangeMirrors(): void
     y += 70;
 
     const description = getDescription(gameState.mirrors[0]);
-    for (const [i, d] of description.entries()) updateTextNode(coilTextIds[i], d);
+    for (const [i, d] of description.entries()) updateTextNode(coilTextIds[i], d, 1, Align.Left, node_colour[coilTextIds[i]]);
   }
   else
   {
@@ -121,7 +121,8 @@ export function arrangeMirrors(): void
     y += 70;
 
     const description = getDescription(gameState.mirrors[1]);
-    for (const [i, d] of description.entries()) updateTextNode(coilTextIds[i], d);
+    for (const [i, d] of description.entries()) updateTextNode(brassTextIds[i], d, 1, Align.Left, node_colour[brassTextIds[i]]);
+
   }
   else
   {
@@ -135,7 +136,7 @@ export function arrangeMirrors(): void
     y += 70;
 
     const description = getDescription(gameState.mirrors[2]);
-    for (const [i, d] of description.entries()) updateTextNode(coilTextIds[i], d);
+    for (const [i, d] of description.entries()) updateTextNode(steelTextIds[i], d, 1, Align.Left, node_colour[steelTextIds[i]]);
   }
   else
   {
@@ -149,7 +150,7 @@ export function arrangeMirrors(): void
     y += 70;
 
     const description = getDescription(gameState.mirrors[3]);
-    for (const [i, d] of description.entries()) updateTextNode(coilTextIds[i], d);
+    for (const [i, d] of description.entries()) updateTextNode(silverTextIds[i], d, 1, Align.Left, node_colour[silverTextIds[i]]);
   }
   else
   {
@@ -163,7 +164,7 @@ export function arrangeMirrors(): void
     y += 70;
 
     const description = getDescription(gameState.mirrors[4]);
-    for (const [i, d] of description.entries()) updateTextNode(coilTextIds[i], d);
+    for (const [i, d] of description.entries()) updateTextNode(goldTextIds[i], d, 1, Align.Left, node_colour[goldTextIds[i]]);
   }
   else
   {
@@ -249,8 +250,9 @@ export function mirrorSelect(now: number, delta: number): void
   {
     mirrorSelected = false;
     generateLevel();
-    resetAdventureScene();
     resetPlayer();
+    resetAdventureScene();
+    loadPlayerAbilities();
     setScene(Scenes.Adventure);
   }
 }
