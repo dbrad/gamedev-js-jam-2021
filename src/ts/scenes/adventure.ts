@@ -26,6 +26,7 @@ enum mode
 
 export let adventureRootId = -1;
 
+let sideBar = -1;
 let restButtonId = -1;
 let sacrificeButtonId = -1;
 let leaveButtonId = -1;
@@ -73,14 +74,14 @@ export function setupAdventureScene()
   node_size[adventureRootId][1] = screenHeight;
 
   // Side Bar
-  const sideBar = createWindowNode([488, 34], [150, screenHeight - 34]);
+  sideBar = createWindowNode([488, 34], [150, screenHeight - 34]);
   addChildNode(adventureRootId, sideBar);
 
-  restButtonId = createButtonNode("rest", [142, 70], "hp for sanity   (10% for 10%)");
+  restButtonId = createButtonNode("rest", [142, 70], "hp for sanity (10%<=>10%)");
   moveNode(restButtonId, [4, 4]);
   addChildNode(sideBar, restButtonId);
 
-  sacrificeButtonId = createButtonNode("bleed", [142, 70], "sanity for hp   (1 for 25%");
+  sacrificeButtonId = createButtonNode("bleed", [142, 70], "sanity for hp (1<=>25%)");
   moveNode(sacrificeButtonId, [4, 84]);
   node_enabled[sacrificeButtonId] = false;
   addChildNode(sideBar, sacrificeButtonId);
@@ -285,7 +286,7 @@ export function loadPlayerAbilities(): void
             break;
         }
         node_enabled[sacrificeButtonId] = true;
-        node_second_text_line[sacrificeButtonId] = `sanity for hp   (1 for ${ playerSacrifice * 100 }%)`
+        node_second_text_line[sacrificeButtonId] = `sanity for hp (1<=>${ playerSacrifice * 100 }%)`
         break;
       case GemType.Alexandrite:
         let rooms = 1 + ((gameState.gems[gem].level - 1) * 2);
@@ -366,7 +367,7 @@ export function adventure(now: number, delta: number): void
   else if (!xpSmoothing && player.xpPool >= 1)
   {
     player.xpPool -= 1;
-    xpSmoothing = createInterpolationData(200, [player.xp], [player.xp + 1])
+    xpSmoothing = createInterpolationData(100, [player.xp], [player.xp + 1])
   }
   else if (xpSmoothing)
   {
@@ -548,9 +549,11 @@ export function adventure(now: number, delta: number): void
 
   node_enabled[restButtonId] = restable
   node_enabled[sacrificeButtonId] = bleedable
-
+  node_enabled[sideBar] = false;
+  
   if (game_mode === mode.Player)
   {
+    node_enabled[sideBar] = true;
     if (inputContext.fire === restButtonId)
     {
       if (restable)

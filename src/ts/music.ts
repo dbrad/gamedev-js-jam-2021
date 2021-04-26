@@ -10,7 +10,7 @@ export function setupMusic(): void
   titleMusic.setAttribute("preload", "auto");
   titleMusic.setAttribute("controls", "none");
   titleMusic.style.display = "none";
-  titleMusic.volume = 0.5;
+  titleMusic.volume = 0.3;
   document.body.appendChild(titleMusic);
   titleMusic.addEventListener("ended", () =>
   {
@@ -26,7 +26,7 @@ export function setupMusic(): void
   campMusic.setAttribute("preload", "auto");
   campMusic.setAttribute("controls", "none");
   campMusic.style.display = "none";
-  campMusic.volume = 0.5;
+  campMusic.volume = 0.3;
   document.body.appendChild(campMusic);
   campMusic.addEventListener("ended", () =>
   {
@@ -42,7 +42,7 @@ export function setupMusic(): void
   adventureMusic01.setAttribute("preload", "auto");
   adventureMusic01.setAttribute("controls", "none");
   adventureMusic01.style.display = "none";
-  adventureMusic01.volume = 0.5;
+  adventureMusic01.volume = 0.3;
   document.body.appendChild(adventureMusic01);
   adventureMusic01.addEventListener("ended", () =>
   {
@@ -58,7 +58,7 @@ export function setupMusic(): void
   adventureMusic02.setAttribute("preload", "auto");
   adventureMusic02.setAttribute("controls", "none");
   adventureMusic02.style.display = "none";
-  adventureMusic02.volume = 0.5;
+  adventureMusic02.volume = 0.3;
   document.body.appendChild(adventureMusic02);
   adventureMusic02.addEventListener("ended", () =>
   {
@@ -80,7 +80,7 @@ export enum Music
 
 export function toggleVolume(): void
 {
-  if (campMusic && campMusic.volume === 0.5)
+  if (campMusic && campMusic.volume === 0.3)
   {
     if (titleMusic) titleMusic.volume = 0;
     if (campMusic) campMusic.volume = 0;
@@ -90,10 +90,10 @@ export function toggleVolume(): void
   }
   else
   {
-    if (titleMusic) titleMusic.volume = 0.5;
-    if (campMusic) campMusic.volume = 0.5;
-    if (adventureMusic01) adventureMusic01.volume = 0.5;
-    if (adventureMusic02) adventureMusic02.volume = 0.5;
+    if (titleMusic) titleMusic.volume = 0.3;
+    if (campMusic) campMusic.volume = 0.3;
+    if (adventureMusic01) adventureMusic01.volume = 0.3;
+    if (adventureMusic02) adventureMusic02.volume = 0.3;
     musicMuted = false;
   }
 }
