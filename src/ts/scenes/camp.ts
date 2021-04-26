@@ -198,7 +198,7 @@ export function campScene(): void
   if (!gameState.currentEvent && !gameState.flags["smith_reveal"] && gameState.currencies.sand > 0)
   {
     gameState.flags["smith_reveal"] = true;
-    gameState.currentEvent = createBasicDialogEvent("Come on over the the smithy if you want to create new mirrors, or fix up one you already have.");
+    gameState.currentEvent = createBasicDialogEvent("Come on over to the smithy if you want to create new mirrors, or fix up one you already have.");
   }
 
   updateTextNode(sandAmountId, `${ gameState.currencies.sand }`, 1, Align.Right);
