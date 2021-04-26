@@ -318,7 +318,7 @@ function getNextFragment(): LootType
 {
   if (fragmentDeck.length === 0)
   {
-    fragmentDeck = shuffle([LootType.Glass, LootType.Brass, LootType.Steel, LootType.Gold, LootType.Silver]);
+    fragmentDeck = shuffle([LootType.Glass, LootType.Glass, LootType.Glass, LootType.Glass, LootType.Brass, LootType.Steel, LootType.Gold, LootType.Silver]);
   }
 
   return fragmentDeck.pop() ?? LootType.Glass;
@@ -432,8 +432,8 @@ function createCombatRoom(numberOfRooms: number): Room
   const money = Math.ceil((moneyPerLevel[difficulty] * 0.7) / (numberOfRooms - 1));
   const frag = Math.ceil((fragPerLevel[difficulty] * 0.7) / (numberOfRooms - 1));
 
-  const hp = rand(4 + difficulty, 8 + difficulty);
-  const atk = rand(1, difficulty);
+  const hp = rand(3 + difficulty, 6 + difficulty);
+  const atk = rand(1, Math.max(1, difficulty - 1));
   const def = rand(0, difficulty);
   const spd = rand(0, 2 * difficulty);
 

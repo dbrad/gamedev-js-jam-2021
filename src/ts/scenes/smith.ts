@@ -198,11 +198,11 @@ function createSmithingPanel(mirror: Mirror): number[]
   moveNode(metalCost, [72, 70]);
   addChildNode(root, metalCost);
 
-  const summary = createTextNode(getSummaryText(mirror), 1, Align.Center, 0xFF2d2d2d);
+  const summary = createTextNode(getSummaryText(mirror), 1, Align.Center, 0xFF4d4d4d);
   moveNode(summary, [150, 92]);
   addChildNode(root, summary);
 
-  const special = createTextNode(getSpecialText(mirror), 1, Align.Center, 0xFF2d2d2d);
+  const special = createTextNode(getSpecialText(mirror), 1, Align.Center, 0xFF4d4d4d);
   moveNode(special, [150, 102]);
   addChildNode(root, special);
 
@@ -295,7 +295,7 @@ function updateUpgradeLabels(textIds: number[], upgradeFrameButton: number, upgr
   if (mirror.frameQuality === FrameQuality.Ornate)
   {
     node_enabled[upgradeFrameButton] = false;
-    updateTextNode(textIds[1], `fully upgraded`, 1, Align.Left, 0xFF2d2d2d);
+    updateTextNode(textIds[1], `fully upgraded`, 1, Align.Left, 0xFF4d4d4d);
     updateTextNode(textIds[2], ``);
   }
   else
@@ -319,7 +319,7 @@ function updateUpgradeLabels(textIds: number[], upgradeFrameButton: number, upgr
   if (mirror.quality === MirrorQuality.Flawless)
   {
     node_enabled[upgradeMirrorButton] = false;
-    updateTextNode(textIds[3], `fully upgraded`, 1, Align.Left, 0xFF2d2d2d);
+    updateTextNode(textIds[3], `fully upgraded`, 1, Align.Left, 0xFF4d4d4d);
     updateTextNode(textIds[4], ``);
   }
   else
@@ -343,7 +343,7 @@ function updateUpgradeLabels(textIds: number[], upgradeFrameButton: number, upgr
 }
 export function updateSmithScreen(): void
 {
-  gl_setClear(170, 32, 32);
+  gl_setClear(100, 32, 32);
 
   if (gameState.mirrors[1].owned)
   {

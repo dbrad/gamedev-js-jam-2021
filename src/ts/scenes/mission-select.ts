@@ -3,6 +3,7 @@ import { addChildNode, createButtonNode, createNode, moveNode, node_enabled, nod
 import { gameState, resetPlayer } from "../gamestate";
 import { generateLevel, setDifficulty } from "../level-gen";
 import { loadPlayerAbilities, resetAdventureScene } from "./adventure";
+import { playadventureMusic, stopCampMusic } from "../music";
 import { screenHeight, screenWidth } from "../screen";
 
 import { arrangeMirrors } from "./mirror-select";
@@ -260,10 +261,12 @@ export function missionSelect(now: number, delta: number): void
       }
       else
       {
+        stopCampMusic();
         generateLevel();
         resetPlayer();
         resetAdventureScene();
         loadPlayerAbilities();
+        playadventureMusic();
         setScene(Scenes.Adventure);
       }
     }
