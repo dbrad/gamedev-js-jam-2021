@@ -131,7 +131,8 @@
         "left_arrow_03",
         "right_arrow_01",
         "right_arrow_02",
-        "right_arrow_03"
+        "right_arrow_03",
+        "combat_bars"
       ],
       "x": 0,
       "y": 32,
@@ -163,12 +164,45 @@
         "enemy_map_01",
         "enemy_map_02",
         "chest_closed",
-        "chest_open"
+        "chest_open",
+        "map_bang",
+        "map_skull",
+        "map_mirror"
       ],
       "x": 0,
       "y": 56,
       "w": 8,
       "h": 8
+    },
+    {
+      "type": "row",
+      "name": [
+        "coil_mirror",
+        "brass_mirror",
+        "steel_mirror",
+        "silver_mirror",
+        "gold_mirror",
+        "obsidian_mirror",
+        "player_die_right_01",
+        "player_die_right_02",
+        "player_die_right_03",
+        "player_die_left_01",
+        "player_die_left_02",
+        "player_die_left_03",
+        "gem"
+      ],
+      "x": 0,
+      "y": 64,
+      "w": 16,
+      "h": 16
+    },
+    {
+      "type": "sprite",
+      "name": "empty_bar",
+      "x": 0,
+      "y": 80,
+      "w": 32,
+      "h": 4
     }
   ]
 }

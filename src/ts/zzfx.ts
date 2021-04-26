@@ -1,9 +1,5 @@
 'use strict';
 
-import { rand } from "./random";
-
-let musicEnabled: boolean = true;
-
 // zzfx() - the universal entry point -- returns a AudioBufferSourceNode
 //@ts-ignore
 let zzfx = (...t) => zzfxP(zzfxG(...t))
@@ -28,32 +24,14 @@ let zzfxR = 44100
 //@ts-ignore
 let zzfxX = new (top.AudioContext || webkitAudioContext);
 
-//! ZzFXM (v2.0.3) | (C) Keith Clark | MIT | https://github.com/keithclark/ZzFXM
-//@ts-ignore
-let zzfxM = (n, f, t, e = 125) => { let l, o, z, r, g, h, x, a, u, c, d, i, m, p, G, M = 0, R = [], b = [], j = [], k = 0, q = 0, s = 1, v = {}, w = zzfxR / e * 60 >> 2; for (; s; k++)R = [s = a = d = m = 0], t.map((e, d) => { for (x = f[e][k] || [0, 0, 0], s |= !!f[e][k], G = m + (f[e][0].length - 2 - !a) * w, p = d == t.length - 1, o = 2, r = m; o < x.length + p; a = ++o) { for (g = x[o], u = o == x.length + p - 1 && p || c != (x[0] || 0) | g | 0, z = 0; z < w && a; z++ > w - 99 && u ? i += (i < 1) / 99 : 0)h = (1 - i) * R[M++] / 2 || 0, b[r] = (b[r] || 0) - h * q + h, j[r] = (j[r++] || 0) + h * q + h; g && (i = g % 1, q = x[1] || 0, (g |= 0) && (R = v[[c = x[M = 0] || 0, g]] = v[[c, g]] || (l = [...n[c]], l[2] *= 2 ** ((g - 12) / 12), g > 0 ? zzfxG(...l) : []))) } m = G }); return [b, j] }
-
-let song = [[[.3, 0, 260, , 1, 1.5, , , , , , , , , , , , , .2], [.4, 0, 4e3, , , .03, 2, 1.25, , , , , .02, 6.8, -.3, , .5]], [[[, , 1, , , , , , , , , , , , , , , , 1, , , , , , , , , , , , , , , , 1, , , , , , , , , , , , , , , , 8, , , , , , , , , , , , , , , ,], [, , 8, , , , , , , , , , , , , , , , 8, , , , , , , , , , , , , , , , 8, , , , , , , , , , , , , , , , 15, , , , , , , , , , , , , , , ,], [, , 17, , , , , , , , , , , , , , , , 15, , , , , , , , , , , , , , , , 25, , , , , , , , , , , , , , , , 20, , , , , , , , , , , , , , , ,], [1, 1, .25, , , , 13, , , , 13, , , , , , , , , , , , 1, , , , 1, , , , , , , , , , , , 1, , , , 1, , , , , , , , , , , , 1, , , , 1, , , , , , , ,]], [[, , 1, , , , , , , , , , , , , , , , 1, , , , , , , , , , , , , , , , 1, , , , , , , , , , , , , , , , 8, , , , , , , , , , , , , , , ,], [, , 8, , , , , , , , , , , , , , , , 8, , , , , , , , , , , , , , , , 8, , , , , , , , , , , , , , , , 15, , , , , , , , , , , , , , , ,], [, , 17, , , , , , , , , , , , , , , , 15, , , , , , , , , , , , , , , , 25, , , , , , , , , , , , , , , , 20, , , , , , , , , , , , , , , ,]], [[, , 1, , , , , , , , , , , , , , , , 1, , , , , , , , , , , , , , , , 1, , , , , , , , , , , , , , , , 8, , , , , , , , , , , , , , , ,], [, , 8, , , , , , , , , , , , , , , , 8, , , , , , , , , , , , , , , , 8, , , , , , , , , , , , , , , , 15, , , , , , , , , , , , , , , ,], [, , 17, , , , , , , , , , , , , , , , 15, , , , , , , , , , , , , , , , 25, , , , , , , , , , , , , , , , 20, , , , , , , , , , , , , , , ,], [, , , , , , 1, , 32, , , , , , , , , , , , , , 1, , 27, , , , , , , , , , , , , , 1, , 20, , , , , , , , , , , , , , 1, , 17, , , , , , , , , ,]]], [1, 2, 2, 0], 80, { "title": "Space", "instruments": ["P", "H"], "patterns": ["0", "1", "3"] }];
-
-
-// export const buttonHover = zzfxG(.5, 0, 220, 0, 0, .1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0);
-
-//@ts-ignore
-// export const musicData = zzfxM(...song);
-// export let music: AudioBufferSourceNode;
-// export function startMusic(): void
-// {
-//   music = zzfxP(...musicData);
-//   music.onended = repeat;
-// }
-
-// function repeat()
-// {
-//   if (musicEnabled)
-//   {
-//     setTimeout(() =>
-//     {
-//       startMusic();
-//       music.playbackRate.value = rand(3, 5) / 4;
-//     }, 250);
-//   }
-// }
+export let buttonHover: number[];
+export let combatHit: number[];
+export let levelUp: number[];
+export let eventSound: number[];
+export function setupSoundEffects(): void
+{
+  buttonHover = zzfxG(.5, 0, 220, 0, 0, .1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0);
+  combatHit = zzfxG(2.12, .05, 392, 0, 0, .05, 4, 1.79, 1.5, 0, 0, 0, 0, 0, 0, .2, 0, .57, .07, 0); // Hit 74
+  levelUp = zzfxG(1.41, .05, 55, .1, .38, .33, 2, .87, 0, 0, 106, .07, .07, 0, 0, 0, .01, .81, .01, .15); // Powerup 112
+  eventSound = zzfxG(1.28, 0, 188, .09, .49, .56, 1, 1.84, 0, -8.8, 261, .05, .13, 0, 0, 0, .02, .66, .1, .15); // Powerup 118
+}

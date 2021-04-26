@@ -1,15 +1,43 @@
 import { Align, pushQuad, pushSpriteAndSave } from "../draw";
-import { Currencies, gameState, LootType } from "../gamestate";
+import { Currencies, LootType, floorColour, gameState, levelUpGem, levelUpPlayer, nextLevel, wallColour } from "../gamestate";
+import { Direction, addChildNode, createButtonNode, createMovementButtonNode, createNode, createTextNode, createWindowNode, createXPBarNode, moveNode, node_children, node_enabled, node_second_text_line, node_size, node_sprite_timestamp, node_text, node_visible, updateTextNode, updateXPBarValues } from "../node";
+import { Easing, InterpolationData, createInterpolationData, interpolate } from "../interpolate";
+import { FrameMaterial, FrameQuality } from "../mirror";
+import { Scenes, setScene } from "../scene-manager";
+import { combat, combatRootId, prepareCombatScene, setupCombatScene } from "./combat";
+import { createChoiceDialogEvent, createEventChoice, createOutcomeDialogEvent } from "../room-events";
+import { eventSound, zzfxP } from "../zzfx";
+import { screenCenterX, screenCenterY, screenHeight, screenWidth } from "../screen";
+
+import { GemType } from "../ability";
 import { inputContext } from "../input";
-import { createInterpolationData, Easing, interpolate, InterpolationData } from "../interpolate";
-import { addChildNode, createMovementButtonNode, createNode, createTextNode, createWindowNode, Direction, moveNode, node_children, node_enabled, node_size, node_sprite_timestamp, node_visible, updateTextNode } from "../node";
-import { screenWidth, screenHeight, screenCenterX, screenCenterY } from "../screen";
+import { rand } from "../random";
 import { v2 } from "../v2";
-import { combat, prepareCombatScene } from "./combat";
+
+enum mode
+{
+  Player,
+  NoAction,
+  Triggers,
+  Combat,
+  Loot,
+  Events,
+}
 
 export let adventureRootId = -1;
+
+let restButtonId = -1;
+let sacrificeButtonId = -1;
+let leaveButtonId = -1;
+
+let healthAmountId = -1;
+let sanityAmountId = -1;
+
+let levelAmountId = -1;
+let xpBarId = -1;
+
 let sandAmountId = -1;
-let mirrorAmountId = -1;
+let glassAmountId = -1;
 let brassAmountId = -1;
 let steelAmountId = -1;
 let silverAmountId = -1;
@@ -20,29 +48,22 @@ let directionDownId = -1;
 let directionLeftId = -1;
 let directionRightId = -1;
 
+let combatWindowId = -1;
+
 let cameraLERP: InterpolationData | null;
 let playerLERP: InterpolationData | null;
-
-const currencies: Currencies = {
-  sand: 0,
-  mirrorFragments: 0,
-  brassFragments: 0,
-  steelFragments: 0,
-  silverFragments: 0,
-  goldFragments: 0,
-};
-
+let delayedTarget: v2 | null = null;
 let moneyLERP: InterpolationData | null;
+let xpSmoothing: InterpolationData | null;
 
-enum mode
-{
-  Select,
-  Move,
-  Triggers,
-  Combat,
-  Loot,
-  Events,
-}
+const camera: v2 = [60 * 16, 31 * 16];
+const cameraSize: v2 = [41 * 16, 25 * 16];
+const cameraHalfW = Math.floor(cameraSize[0] / 2);
+const cameraHalfH = Math.floor(cameraSize[1] / 2);
+
+let animationTimer = 0;
+let frame = "01";
+let game_mode = mode.Player;
 
 export function setupAdventureScene()
 {
@@ -51,33 +72,109 @@ export function setupAdventureScene()
   node_size[adventureRootId][0] = screenWidth;
   node_size[adventureRootId][1] = screenHeight;
 
-  const topBar = createWindowNode([2, 2], [screenWidth - 4, 30]);
-  addChildNode(adventureRootId, topBar);
-
+  // Side Bar
   const sideBar = createWindowNode([488, 34], [150, screenHeight - 34]);
   addChildNode(adventureRootId, sideBar);
 
-  const health = createTextNode("health");
-  moveNode(health, [4, 6]);
+  restButtonId = createButtonNode("rest", [142, 70], "hp for sanity   (10% for 10%)");
+  moveNode(restButtonId, [4, 4]);
+  addChildNode(sideBar, restButtonId);
+
+  sacrificeButtonId = createButtonNode("bleed", [142, 70], "sanity for hp   (1 for 25%");
+  moveNode(sacrificeButtonId, [4, 84]);
+  node_enabled[sacrificeButtonId] = false;
+  addChildNode(sideBar, sacrificeButtonId);
+
+  leaveButtonId = createButtonNode("retreat", [142, 70]);
+  moveNode(leaveButtonId, [4, screenHeight - 34 - 70 - 4]);
+  addChildNode(sideBar, leaveButtonId);
+
+
+  // Top Bar
+  const topBarSize: v2 = [screenWidth - 4, 30];
+  const topBar = createWindowNode([2, 2], topBarSize);
+  addChildNode(adventureRootId, topBar);
+
+  const level = createTextNode("level", 1, Align.Left);
+  moveNode(level, [12, 4]);
+  addChildNode(topBar, level);
+
+  levelAmountId = createTextNode("0", 1, Align.Right);
+  moveNode(levelAmountId, [108, 4]);
+  addChildNode(topBar, levelAmountId);
+
+  xpBarId = createXPBarNode(3);
+  moveNode(xpBarId, [12, 13]);
+  addChildNode(topBar, xpBarId);
+
+  const health = createTextNode("health", 1, Align.Left);
+  moveNode(health, [128, 6]);
   addChildNode(topBar, health);
 
-  const healthAmount = createTextNode("20/20", 1, Align.Right);
-  moveNode(healthAmount, [120, 6]);
-  addChildNode(topBar, healthAmount);
+  healthAmountId = createTextNode("20/20", 1, Align.Right);
+  moveNode(healthAmountId, [236, 6]);
+  addChildNode(topBar, healthAmountId);
 
-  const stamina = createTextNode("stamina");
-  moveNode(stamina, [4, 16]);
-  addChildNode(topBar, stamina);
+  const sanity = createTextNode("sanity", 1, Align.Left);
+  moveNode(sanity, [128, 16]);
+  addChildNode(topBar, sanity);
 
-  const staminaAmount = createTextNode("10/10", 1, Align.Right);
-  moveNode(staminaAmount, [120, 16]);
-  addChildNode(topBar, staminaAmount);
+  sanityAmountId = createTextNode("10/10", 1, Align.Right);
+  moveNode(sanityAmountId, [236, 16]);
+  addChildNode(topBar, sanityAmountId);
+
+
+
+  const sandLabelId = createTextNode("sand", 1, Align.Right);
+  moveNode(sandLabelId, [topBarSize[0] - 298, 6]);
+  addChildNode(topBar, sandLabelId);
 
   sandAmountId = createTextNode("0", 1, Align.Right);
-  moveNode(sandAmountId, [200, 6]);
+  moveNode(sandAmountId, [topBarSize[0] - 248, 6]);
   addChildNode(topBar, sandAmountId);
 
+  const glassLabelId = createTextNode("glass", 1, Align.Right);
+  moveNode(glassLabelId, [topBarSize[0] - 298, 16]);
+  addChildNode(topBar, glassLabelId);
 
+  glassAmountId = createTextNode("0", 1, Align.Right);
+  moveNode(glassAmountId, [topBarSize[0] - 248, 16]);
+  addChildNode(topBar, glassAmountId);
+
+  const brassLabelId = createTextNode("brass", 1, Align.Right);
+  moveNode(brassLabelId, [topBarSize[0] - 180, 6]);
+  addChildNode(topBar, brassLabelId);
+
+  brassAmountId = createTextNode("0", 1, Align.Right);
+  moveNode(brassAmountId, [topBarSize[0] - 130, 6]);
+  addChildNode(topBar, brassAmountId);
+
+  const steelLabelId = createTextNode("steel", 1, Align.Right);
+  moveNode(steelLabelId, [topBarSize[0] - 180, 16]);
+  addChildNode(topBar, steelLabelId);
+
+  steelAmountId = createTextNode("0", 1, Align.Right);
+  moveNode(steelAmountId, [topBarSize[0] - 130, 16]);
+  addChildNode(topBar, steelAmountId);
+
+  const silverLabelId = createTextNode("silver", 1, Align.Right);
+  moveNode(silverLabelId, [topBarSize[0] - 62, 6]);
+  addChildNode(topBar, silverLabelId);
+
+  silverAmountId = createTextNode("0", 1, Align.Right);
+  moveNode(silverAmountId, [topBarSize[0] - 12, 6]);
+  addChildNode(topBar, silverAmountId);
+
+  const goldLabelId = createTextNode("gold", 1, Align.Right);
+  moveNode(goldLabelId, [topBarSize[0] - 62, 16]);
+  addChildNode(topBar, goldLabelId);
+
+  goldAmountId = createTextNode("0", 1, Align.Right);
+  moveNode(goldAmountId, [topBarSize[0] - 12, 16]);
+  addChildNode(topBar, goldAmountId);
+
+
+  // Direction Buttons
   directionUpId = createMovementButtonNode(Direction.Up);
   moveNode(directionUpId, [screenCenterX - 8, screenCenterY - 64]);
   addChildNode(adventureRootId, directionUpId);
@@ -93,19 +190,126 @@ export function setupAdventureScene()
   directionLeftId = createMovementButtonNode(Direction.Left);
   moveNode(directionLeftId, [screenCenterX - 16 - 64, screenCenterY]);
   addChildNode(adventureRootId, directionLeftId);
+
+  // Combat Window
+  setupCombatScene();
+  combatWindowId = createWindowNode([155, 90], [330, 180]);
+  addChildNode(adventureRootId, combatWindowId);
+  addChildNode(combatWindowId, combatRootId);
+  node_enabled[combatWindowId] = false;
 }
 
-const camera: v2 = [60 * 16, 31 * 16];
-const cameraSize: v2 = [41 * 16, 25 * 16];
-const cameraHalfW = Math.floor(cameraSize[0] / 2);
-const cameraHalfH = Math.floor(cameraSize[1] / 2);
+let playerBonusLoot = 0;
+let playerSacrifice = 0;
 
-let animationTimer = 0;
-let frame = "01";
-let game_mode = mode.Select;
+export function resetAdventureScene(): void
+{
+  camera[0] = 60 * 16;
+  camera[1] = 31 * 16;
 
+  animationTimer = 1;
+  frame = "01";
+
+  playerBonusLoot = 0;
+  playerSacrifice = 0;
+  node_enabled[sacrificeButtonId] = false;
+
+  cameraLERP = null;
+  playerLERP = null;
+  delayedTarget = null;
+  moneyLERP = null;
+  xpSmoothing = null;
+  game_mode = mode.Player;
+  levelUp = false
+}
+
+export function loadPlayerAbilities(): void
+{
+  switch (gameState.equippedMirror)
+  {
+    case FrameMaterial.Gold:
+    case FrameMaterial.Coil:
+      switch (gameState.mirrors[gameState.equippedMirror].frameQuality)
+      {
+        case FrameQuality.Tarnished:
+          playerBonusLoot += 0.05;
+          break;
+        case FrameQuality.Polished:
+          playerBonusLoot += 0.1;
+          break;
+        case FrameQuality.Pristine:
+          playerBonusLoot += 0.15;
+          break;
+        case FrameQuality.Ornate:
+          playerBonusLoot += 0.2;
+          break;
+      }
+      break;
+  }
+  for (const gem of [0, 1, 2, 3, 4, 5, 6])
+  {
+    if (!gameState.gems[gem as GemType].owned) { continue; }
+    switch (gem)
+    {
+      case GemType.Citrine:
+        switch (gameState.gems[gem].level)
+        {
+          case 1:
+            playerBonusLoot += 0.05;
+            break;
+          case 2:
+            playerBonusLoot += 0.1;
+            break;
+          case 3:
+            playerBonusLoot += 0.15;
+            break;
+          case 4:
+            playerBonusLoot += 0.2;
+            break;
+        }
+        break;
+      case GemType.Morganite:
+        switch (gameState.gems[gem].level)
+        {
+          case 1:
+            playerSacrifice = 0.25;
+            break;
+          case 2:
+            playerSacrifice = 0.20;
+            break;
+          case 3:
+            playerSacrifice = 0.15;
+            break;
+          case 4:
+            playerSacrifice = 0.1;
+            break;
+        }
+        node_enabled[sacrificeButtonId] = true;
+        node_second_text_line[sacrificeButtonId] = `sanity for hp   (1 for ${ playerSacrifice * 100 }%)`
+        break;
+      case GemType.Alexandrite:
+        let rooms = 1 + ((gameState.gems[gem].level - 1) * 2);
+        while (rooms > 0)
+        {
+          let x = rand(1, 9);
+          let y = rand(0, 7);
+          if (gameState.currentLevel.rooms[y * 10 + x]
+            && !gameState.currentLevel.rooms[y * 10 + x].peeked)
+          {
+            gameState.currentLevel.rooms[y * 10 + x].peeked = true;
+            rooms--;
+          }
+        }
+    }
+  }
+}
+
+let levelUp: boolean = false;
 export function adventure(now: number, delta: number): void
 {
+  const player = gameState.player;
+  const currencies = gameState.currentLevel.currencies;
+
   animationTimer += delta;
   if (animationTimer > 500)
   {
@@ -139,7 +343,42 @@ export function adventure(now: number, delta: number): void
     }
   }
 
-  updateTextNode(sandAmountId, `${ currencies.sand }`);
+  updateTextNode(healthAmountId, `${ player.health }/${ player.maxHealth }`, 1, Align.Right);
+  updateTextNode(sanityAmountId, `${ player.sanity }/${ player.maxSanity }`, 1, Align.Right);
+
+  updateTextNode(sandAmountId, `${ currencies.sand }`, 1, Align.Right);
+  updateTextNode(glassAmountId, `${ currencies.glassFragments }`, 1, Align.Right);
+  updateTextNode(brassAmountId, `${ currencies.brassFragments }`, 1, Align.Right);
+  updateTextNode(steelAmountId, `${ currencies.steelFragments }`, 1, Align.Right);
+  updateTextNode(silverAmountId, `${ currencies.silverFragments }`, 1, Align.Right);
+  updateTextNode(goldAmountId, `${ currencies.goldFragments }`, 1, Align.Right);
+
+  if (levelUp)
+  {
+    levelUpPlayer();
+    levelUp = false;
+  }
+
+  if (!xpSmoothing && player.xp / nextLevel(player.level) >= 1)
+  {
+    levelUp = true;
+  }
+  else if (!xpSmoothing && player.xpPool >= 1)
+  {
+    player.xpPool -= 1;
+    xpSmoothing = createInterpolationData(200, [player.xp], [player.xp + 1])
+  }
+  else if (xpSmoothing)
+  {
+    let i = interpolate(now, xpSmoothing);
+    player.xp = i.values[0];
+    if (i.done)
+    {
+      xpSmoothing = null;
+    }
+  }
+  updateXPBarValues(xpBarId, player.xp / nextLevel(player.level));
+  updateTextNode(levelAmountId, `${ player.level }`, 1, Align.Right);
 
   const cameraTopLeft: v2 = [camera[0] - cameraHalfW, camera[1] - cameraHalfH];
   const cameraBottomRight: v2 = [camera[0] + cameraHalfW, camera[1] + cameraHalfH];
@@ -151,12 +390,21 @@ export function adventure(now: number, delta: number): void
   const playerRoomY = Math.floor(playerTileY / 9);
 
   const playerRoomIndex = playerRoomY * 10 + playerRoomX;
-  if (gameState.currentLevel.rooms[playerRoomIndex]) gameState.currentLevel.rooms[playerRoomIndex].seen = true;
+  const playerRoom = gameState.currentLevel.rooms[playerRoomIndex];
+  if (playerRoom)
+  {
+    if (!playerRoom.seen)
+    {
+      player.sanity -= 1;
+    }
+    playerRoom.seen = true;
+  }
   if (gameState.currentLevel.rooms[playerRoomIndex + 10]) gameState.currentLevel.rooms[playerRoomIndex + 10].peeked = true;
   if (gameState.currentLevel.rooms[playerRoomIndex - 10]) gameState.currentLevel.rooms[playerRoomIndex - 10].peeked = true;
   if (gameState.currentLevel.rooms[playerRoomIndex + 1]) gameState.currentLevel.rooms[playerRoomIndex + 1].peeked = true;
   if (gameState.currentLevel.rooms[playerRoomIndex - 1]) gameState.currentLevel.rooms[playerRoomIndex - 1].peeked = true;
 
+  //#region MAP RENDER
   for (let y = cameraTopLeft[1]; y <= cameraBottomRight[1]; y += 16)
   {
     for (let x = cameraTopLeft[0]; x <= cameraBottomRight[0]; x += 16)
@@ -168,23 +416,41 @@ export function adventure(now: number, delta: number): void
       {
         const renderX = tileX * 16 - cameraTopLeft[0] - 8;
         const renderY = tileY * 16 - cameraTopLeft[1] - 12;
-        if (gameState.currentLevel?.tileMap[tileY * 110 + tileX] === 2)
-        {
-          pushSpriteAndSave("wall_02", renderX, renderY, 0xFF1e1e91, 2, 2);
-        }
-        else if (gameState.currentLevel?.tileMap[tileY * 110 + tileX] === 5)
-        {
-          pushSpriteAndSave("floor_01", renderX, renderY, 0xFFFFFFFF, 2, 2);
-        }
-        else
-        {
-          pushSpriteAndSave("wall_01", renderX, renderY, 0xFFFFFFFF, 2, 2);
-        }
 
-        if (playerTileX == tileX && playerTileY == tileY)
+        let sprite = "wall_01";
+        let colour = wallColour[gameState.currentLevel.realm];
+        switch (gameState.currentLevel?.tileMap[tileY * 110 + tileX])
         {
-          pushSpriteAndSave(`player_map_${ frame }`, renderX, renderY, 0xFFFFFFFF, 2, 2);
+          case 2:
+            sprite = "wall_02";
+            colour = wallColour[gameState.currentLevel.realm];
+            break;
+          case 3:
+            sprite = "wall_03";
+            colour = wallColour[gameState.currentLevel.realm];
+            break;
+          case 4:
+            sprite = "wall_04";
+            colour = wallColour[gameState.currentLevel.realm];
+            break;
+          case 5:
+            sprite = "floor_01";
+            colour = floorColour[gameState.currentLevel.realm]
+            break;
+          case 6:
+            sprite = "floor_02";
+            colour = floorColour[gameState.currentLevel.realm]
+            break;
+          case 7:
+            sprite = "floor_03";
+            colour = floorColour[gameState.currentLevel.realm]
+            break;
+          case 8:
+            sprite = "floor_04";
+            colour = floorColour[gameState.currentLevel.realm]
+            break;
         }
+        pushSpriteAndSave(sprite, renderX, renderY, colour, 2, 2);
 
         // Lighting
         const distance = Math.sqrt((playerTileX - tileX) ** 2 + (playerTileY - tileY) ** 2);
@@ -208,21 +474,28 @@ export function adventure(now: number, delta: number): void
     }
   }
 
+  pushSpriteAndSave(
+    `player_map_${ frame }`,
+    gameState.currentLevel.playerPosition[0] - cameraTopLeft[0] - 8,
+    gameState.currentLevel.playerPosition[1] - cameraTopLeft[1] - 12,
+    0xFFFFFFFF, 2, 2);
+
   const renderX = playerRoomX * 11 * 16 + 5 * 16 - cameraTopLeft[0] - 8;
   const renderY = playerRoomY * 9 * 16 + 4 * 16 - cameraTopLeft[1] - 12;
-  if (gameState.currentLevel.rooms[playerRoomIndex]?.enemies.length > 0)
+  if (playerRoom?.enemy)
   {
     pushSpriteAndSave(`enemy_map_${ frame }`, renderX, renderY, 0xFFFFFFFF, 2, 2);
   }
-  else if (gameState.currentLevel.rooms[playerRoomIndex]?.loot.length > 0)
+  else if (playerRoom?.loot.length > 0)
   {
-    pushSpriteAndSave(`chest_closed`, renderX, renderY, 0xFFFFFFFF, 2, 2);
+    //pushSpriteAndSave(`chest_closed`, renderX, renderY, 0xFFFFFFFF, 2, 2);
   }
 
   for (let y = 0; y < 8; y++)
   {
     for (let x = 1; x <= 9; x++)
     {
+      const currentRoom = gameState.currentLevel.rooms[y * 10 + x];
       if (playerRoomX === x && playerRoomY === y)
       {
         if (frame === "01")
@@ -234,42 +507,153 @@ export function adventure(now: number, delta: number): void
           pushQuad(x * 18 + 1, y * 18 + 1 + 200, 16, 16, 0xFF666666);
         }
       }
-      else if (gameState.currentLevel.rooms[y * 10 + x]?.seen)
+      else if (currentRoom?.seen)
       {
         pushQuad(x * 18 + 1, y * 18 + 1 + 200, 16, 16, 0xFF666666);
       }
-      else if (gameState.currentLevel.rooms[y * 10 + x]?.peeked)
+      else if (currentRoom?.peeked)
       {
         pushQuad(x * 18 + 1, y * 18 + 1 + 200, 16, 16, 0xFF333333);
+
+        if (currentRoom?.enemy && !currentRoom?.exit)
+        {
+          pushSpriteAndSave("map_skull", x * 18 + 6, y * 18 + 6 + 200);
+        }
+        else if (currentRoom?.events.length > 0)
+        {
+          pushSpriteAndSave("map_bang", x * 18 + 5, y * 18 + 5 + 200);
+        }
+      }
+
+      if ((currentRoom?.seen || currentRoom?.peeked) && currentRoom?.exit)
+      {
+        pushSpriteAndSave("map_mirror", x * 18 + 5, y * 18 + 5 + 200);
       }
     }
   }
+  //#endregion MAP RENDER
 
-  if (game_mode === mode.Select)
+  if (playerRoom.exit)
   {
-    node_enabled[directionUpId] = (gameState.currentLevel.tileMap[(playerTileY - 9) * 110 + playerTileX] || 0) > 0;
-    node_enabled[directionDownId] = (gameState.currentLevel.tileMap[(playerTileY + 9) * 110 + playerTileX] || 0) > 0;
-    node_enabled[directionLeftId] = (gameState.currentLevel.tileMap[(playerTileY) * 110 + playerTileX - 11] || 0) > 0;
-    node_enabled[directionRightId] = (gameState.currentLevel.tileMap[(playerTileY) * 110 + playerTileX + 11] || 0) > 0;
+    node_text[leaveButtonId] = "leave";
+  }
+  else
+  {
+    node_text[leaveButtonId] = "retreat";
+  }
+
+  const sane = player.sanity > 0;
+  const restable = player.health < player.maxHealth && player.sanity > Math.floor(player.maxSanity * 0.1);
+  const bleedable = player.sanity < player.maxSanity && playerSacrifice > 0;
+
+  node_enabled[restButtonId] = restable
+  node_enabled[sacrificeButtonId] = bleedable
+
+  if (game_mode === mode.Player)
+  {
+    if (inputContext.fire === restButtonId)
+    {
+      if (restable)
+      {
+        player.sanity -= Math.floor(player.maxSanity * 0.1);
+        player.health += Math.floor(player.maxHealth * 0.1);
+        if (player.health > player.maxHealth)
+        {
+          player.health = player.maxHealth;
+        }
+      }
+    }
+    else if (inputContext.fire === sacrificeButtonId)
+    {
+      if (bleedable)
+      {
+        player.sanity = Math.min(player.maxSanity, player.sanity + 1);
+        player.health = Math.max(0, player.health - Math.ceil(player.maxHealth * playerSacrifice));
+      }
+    }
+    else if (inputContext.fire === leaveButtonId)
+    {
+      if (playerRoom.exit)
+      {
+        const yes = createEventChoice("yes", () =>
+        {
+          gameState.currencies.sand += Math.ceil(currencies.sand);
+          gameState.currencies.glassFragments += Math.ceil(currencies.glassFragments);
+          gameState.currencies.brassFragments += Math.ceil(currencies.brassFragments);
+          gameState.currencies.steelFragments += Math.ceil(currencies.steelFragments);
+          gameState.currencies.silverFragments += Math.ceil(currencies.silverFragments);
+          gameState.currencies.goldFragments += Math.ceil(currencies.goldFragments);
+
+          setScene(Scenes.Camp);
+          // game_mode = mode.Exit;
+        });
+        const no = createEventChoice("no", () => { });
+        gameState.currentEvent = createChoiceDialogEvent([yes, no], "Exit the dungeon with all of your findings?", 1000);
+      }
+      else
+      {
+        const yes = createEventChoice("yes", () =>
+        {
+          gameState.currencies.sand += Math.ceil(currencies.sand * 0.5);
+          gameState.currencies.glassFragments += Math.ceil(currencies.glassFragments * 0.5);
+          gameState.currencies.brassFragments += Math.ceil(currencies.brassFragments * 0.5);
+          gameState.currencies.steelFragments += Math.ceil(currencies.steelFragments * 0.5);
+          gameState.currencies.silverFragments += Math.ceil(currencies.silverFragments * 0.5);
+          gameState.currencies.goldFragments += Math.ceil(currencies.goldFragments * 0.5);
+
+          setScene(Scenes.Camp);
+          // game_mode = mode.Exit;
+        });
+        const no = createEventChoice("no", () => { });
+        gameState.currentEvent = createChoiceDialogEvent([yes, no], "Retreat from the dungeon and keep 50% of what you've found?", 1000);
+      }
+    }
+
+    if (player.health <= 0)
+    {
+      gameState.currentEvent = createOutcomeDialogEvent(
+        () =>
+        {
+          gameState.currencies.sand += Math.ceil(currencies.sand * 0.3);
+          gameState.currencies.glassFragments += Math.ceil(currencies.glassFragments * 0.3);
+          gameState.currencies.brassFragments += Math.ceil(currencies.brassFragments * 0.3);
+          gameState.currencies.steelFragments += Math.ceil(currencies.steelFragments * 0.3);
+          gameState.currencies.silverFragments += Math.ceil(currencies.silverFragments * 0.3);
+          gameState.currencies.goldFragments += Math.ceil(currencies.goldFragments * 0.3);
+
+          setScene(Scenes.Camp);
+        },
+        "You have fallen and will return to camp with 30% of what you found.", 1000);
+      game_mode = mode.NoAction;
+    }
+
+    node_enabled[directionUpId] = sane && (gameState.currentLevel.tileMap[(playerTileY - 9) * 110 + playerTileX] || 0) > 0;
+    node_enabled[directionDownId] = sane && (gameState.currentLevel.tileMap[(playerTileY + 9) * 110 + playerTileX] || 0) > 0;
+    node_enabled[directionLeftId] = sane && (gameState.currentLevel.tileMap[(playerTileY) * 110 + playerTileX - 11] || 0) > 0;
+    node_enabled[directionRightId] = sane && (gameState.currentLevel.tileMap[(playerTileY) * 110 + playerTileX + 11] || 0) > 0;
 
     let target: number[] | null = null;
-    if (inputContext.active === directionUpId)
+    if (inputContext.fire === directionUpId)
     {
-      target = [gameState.currentLevel.playerPosition[0], gameState.currentLevel.playerPosition[1] - 16 * 9];
+      target = [gameState.currentLevel.playerPosition[0], gameState.currentLevel.playerPosition[1] - 16 * 8];
+      delayedTarget = [gameState.currentLevel.playerPosition[0], gameState.currentLevel.playerPosition[1] - 16 * 9];
     }
-    else if (inputContext.active === directionDownId)
+    else if (inputContext.fire === directionDownId)
     {
-      target = [gameState.currentLevel.playerPosition[0], gameState.currentLevel.playerPosition[1] + 16 * 9];
+      target = [gameState.currentLevel.playerPosition[0], gameState.currentLevel.playerPosition[1] + 16 * 8];
+      delayedTarget = [gameState.currentLevel.playerPosition[0], gameState.currentLevel.playerPosition[1] + 16 * 9];
     }
-    else if (inputContext.active === directionLeftId)
+    else if (inputContext.fire === directionLeftId)
     {
-      target = [gameState.currentLevel.playerPosition[0] - 16 * 11, gameState.currentLevel.playerPosition[1]];
+      target = [gameState.currentLevel.playerPosition[0] - 16 * 10, gameState.currentLevel.playerPosition[1]];
+      delayedTarget = [gameState.currentLevel.playerPosition[0] - 16 * 11, gameState.currentLevel.playerPosition[1]];
     }
-    else if (inputContext.active === directionRightId)
+    else if (inputContext.fire === directionRightId)
     {
-      target = [gameState.currentLevel.playerPosition[0] + 16 * 11, gameState.currentLevel.playerPosition[1]];
+      target = [gameState.currentLevel.playerPosition[0] + 16 * 10, gameState.currentLevel.playerPosition[1]];
+      delayedTarget = [gameState.currentLevel.playerPosition[0] + 16 * 11, gameState.currentLevel.playerPosition[1]];
     }
-    if (target)
+    if (target && delayedTarget)
     {
       node_enabled[directionUpId] = false;
       node_sprite_timestamp[node_children[directionUpId][0]] = 0;
@@ -283,31 +667,34 @@ export function adventure(now: number, delta: number): void
       node_enabled[directionRightId] = false;
       node_sprite_timestamp[node_children[directionRightId][0]] = 0;
 
-      cameraLERP = createInterpolationData(500, camera, target, Easing.EaseOutQuad);
+      const targetRoom: v2 = [Math.floor(target[0] / 16 / 11), Math.floor(target[1] / 16 / 9)]
+      const room = gameState.currentLevel.rooms[targetRoom[1] * 10 + targetRoom[0]]
+      if (room?.enemy === null)
+      {
+        target = [...delayedTarget];
+        delayedTarget = null;
+      }
+      cameraLERP = createInterpolationData(500, camera, delayedTarget ?? target, Easing.EaseOutQuad);
       playerLERP = createInterpolationData(750, gameState.currentLevel.playerPosition, target, Easing.Linear, () =>
       {
         game_mode = mode.Triggers;
       });
-
-      game_mode = mode.Move;
+      game_mode = mode.NoAction;
     }
   }
-  else if (game_mode === mode.Move)
-  {
-  }
+  else if (game_mode === mode.NoAction) { }
   else if (game_mode === mode.Triggers)
   {
-    if (gameState.currentLevel.rooms[playerRoomIndex]?.enemies.length > 0)
+    if (playerRoom.enemy)
     {
-      prepareCombatScene(gameState.currentLevel.rooms[playerRoomIndex]?.enemies);
-      gameState.currentLevel.rooms[playerRoomIndex].enemies.length = 0;
+      prepareCombatScene(playerRoom.enemy);
       game_mode = mode.Combat;
     }
-    else if (gameState.currentLevel.rooms[playerRoomIndex]?.loot.length > 0)
+    else if (playerRoom?.loot.length > 0)
     {
       let target = [
         currencies.sand,
-        currencies.mirrorFragments,
+        currencies.glassFragments,
         currencies.brassFragments,
         currencies.steelFragments,
         currencies.silverFragments,
@@ -316,37 +703,37 @@ export function adventure(now: number, delta: number): void
 
       do
       {
-        const loot = gameState.currentLevel.rooms[playerRoomIndex]?.loot.pop();
+        const loot = playerRoom?.loot.pop();
         if (loot)
         {
           switch (loot.type)
           {
             case LootType.Sand:
-              target[0] += loot.amount;
+              target[0] += Math.ceil(loot.amount * (1 + playerBonusLoot));
               break;
-            case LootType.Mirror:
-              target[1] += loot.amount;
+            case LootType.Glass:
+              target[1] += Math.ceil(loot.amount * (1 + playerBonusLoot));
               break;
             case LootType.Brass:
-              target[2] += loot.amount;
+              target[2] += Math.ceil(loot.amount * (1 + playerBonusLoot));
               break;
             case LootType.Steel:
-              target[3] += loot.amount;
+              target[3] += Math.ceil(loot.amount * (1 + playerBonusLoot));
               break;
             case LootType.Silver:
-              target[4] += loot.amount;
+              target[4] += Math.ceil(loot.amount * (1 + playerBonusLoot));
               break;
             case LootType.Gold:
-              target[5] += loot.amount;
+              target[5] += Math.ceil(loot.amount * (1 + playerBonusLoot));
               break;
           }
         }
-      } while (gameState.currentLevel.rooms[playerRoomIndex]?.loot.length > 0)
+      } while (playerRoom?.loot.length > 0)
 
       moneyLERP = createInterpolationData(750,
         [
           currencies.sand,
-          currencies.mirrorFragments,
+          currencies.glassFragments,
           currencies.brassFragments,
           currencies.steelFragments,
           currencies.silverFragments,
@@ -356,20 +743,65 @@ export function adventure(now: number, delta: number): void
         Easing.Linear)
       game_mode = mode.Loot;
     }
-    else if (gameState.currentLevel.rooms[playerRoomIndex]?.events.length > 0)
-    {
-      gameState.currentEvent = gameState.currentLevel.rooms[playerRoomIndex]?.events.shift() ?? null;
-      game_mode = mode.Events;
-    }
     else
     {
-      game_mode = mode.Select;
+      gameState.currentEvent = playerRoom?.events.shift() ?? null;
+      if (gameState.currentEvent)
+      {
+        zzfxP(eventSound);
+      }
+      game_mode = mode.Events;
     }
   }
   else if (game_mode === mode.Combat)
   {
-    combat(now, delta);
-    game_mode = mode.Triggers;
+    node_enabled[combatWindowId] = true;
+
+    if (!combat(now, delta))
+    {
+      playerRoom.enemy = null;
+      node_enabled[combatWindowId] = false;
+
+      if (player.health <= 0)
+      {
+        gameState.currentEvent = createOutcomeDialogEvent(
+          () =>
+          {
+            gameState.currencies.sand += Math.ceil(currencies.sand * 0.3);
+            gameState.currencies.glassFragments += Math.ceil(currencies.glassFragments * 0.3);
+            gameState.currencies.brassFragments += Math.ceil(currencies.brassFragments * 0.3);
+            gameState.currencies.steelFragments += Math.ceil(currencies.steelFragments * 0.3);
+            gameState.currencies.silverFragments += Math.ceil(currencies.silverFragments * 0.3);
+            gameState.currencies.goldFragments += Math.ceil(currencies.goldFragments * 0.3);
+
+            setScene(Scenes.Camp);
+          },
+          "You have fallen and will return to camp with 30% of what you found.", 1000);
+        game_mode = mode.NoAction;
+      }
+      else
+      {
+        if (playerRoom.exit)
+        {
+          levelUpGem();
+
+          if (gameState.currentLevel.difficulty === 3)
+          {
+            gameState.flags["clear_3_star"] = true
+          }
+          else if (gameState.currentLevel.difficulty === 5)
+          {
+            gameState.flags["clear_5_star"] = true
+          }
+          else if (gameState.currentLevel.difficulty === 7)
+          {
+            gameState.flags["clear_7_star"] = true
+          }
+          // TODO(dbrad): Set clear flags
+        }
+        game_mode = mode.Triggers;
+      }
+    }
   }
   else if (game_mode === mode.Loot)
   {
@@ -377,7 +809,7 @@ export function adventure(now: number, delta: number): void
     {
       let i = interpolate(now, moneyLERP);
       currencies.sand = Math.floor(i.values[0]);
-      currencies.mirrorFragments = Math.floor(i.values[1]);
+      currencies.glassFragments = Math.floor(i.values[1]);
       currencies.brassFragments = Math.floor(i.values[2]);
       currencies.steelFragments = Math.floor(i.values[3]);
       currencies.silverFragments = Math.floor(i.values[4]);
@@ -391,6 +823,22 @@ export function adventure(now: number, delta: number): void
   }
   else if (game_mode === mode.Events)
   {
-    game_mode = mode.Select;
+    if (!gameState.currentEvent)
+    {
+      if (delayedTarget)
+      {
+        game_mode = mode.NoAction;
+
+        playerLERP = createInterpolationData(100, gameState.currentLevel.playerPosition, delayedTarget, Easing.Linear, () =>
+        {
+          game_mode = mode.Player;
+        });
+        delayedTarget = null;
+      }
+      else
+      {
+        game_mode = mode.Player;
+      }
+    }
   }
 }

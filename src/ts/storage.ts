@@ -1,15 +1,22 @@
 export function saveObject(key: string, object: Object): void
 {
   const json = JSON.stringify(object);
-  window.localStorage.setItem(key, json);
+  const b64 = btoa(json);
+  window.localStorage.setItem(key, b64);
 }
 
 export function loadObject(key: string): Object
 {
-  const json = window.localStorage.getItem(key);
-  if (!json)
+  const b64 = window.localStorage.getItem(key);
+  if (!b64)
   {
     return {};
   }
+  const json = atob(b64);
   return JSON.parse(json);
+}
+
+export function hasObject(key: string): boolean
+{
+  return (window.localStorage.getItem(key) !== null);
 }
