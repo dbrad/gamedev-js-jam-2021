@@ -1,6 +1,7 @@
 import { Align, pushQuad, pushSpriteAndSave } from "../draw";
+import { Music, musicMuted, playMusic, toggleVolume } from "../music";
 import { Scenes, setScene } from "../scene-manager";
-import { addChildNode, createButtonNode, createNode, createSprite, createTextNode, createWindowNode, moveNode, node_size, node_visible, updateTextNode } from "../node";
+import { addChildNode, createButtonNode, createNode, createSprite, createTextNode, createWindowNode, moveNode, node_enabled, node_size, node_visible, updateTextNode } from "../node";
 import { screenCenterX, screenHeight, screenWidth } from "../screen";
 
 import { arrangeMissionSelect } from "./mission-select";
@@ -20,9 +21,13 @@ let steelAmountId = -1;
 let silverAmountId = -1;
 let goldAmountId = -1;
 
-let option01 = -1;
-let option02 = -1;
-let option03 = -1;
+let embarkButtonId = -1;
+let smithButtonId = -1;
+let inventoryButtonId = -1;
+let exitButton = -1;
+
+let musicButton = -1;
+let muteMusic = -1;
 
 export function setupCampScene(): void
 {
@@ -30,6 +35,21 @@ export function setupCampScene(): void
   node_visible[campRootId] = false;
   node_size[campRootId][0] = screenWidth;
   node_size[campRootId][1] = screenHeight;
+
+  musicButton = createSprite(
+    [{ spriteName: "sound", duration: 0 }],
+    3
+  );
+  moveNode(musicButton, [4, screenHeight - 28]);
+  addChildNode(campRootId, musicButton);
+
+  muteMusic = createSprite(
+    [{ spriteName: "cross", duration: 0 }],
+    3
+  );
+  moveNode(muteMusic, [4, screenHeight - 28]);
+  node_enabled[muteMusic] = musicMuted;
+  addChildNode(campRootId, muteMusic);
 
   const fire = createSprite(
     [
@@ -120,19 +140,23 @@ export function setupCampScene(): void
   const window = createWindowNode([452, 34], [186, 324]);
   addChildNode(campRootId, window);
 
-  option01 = createButtonNode("delve", [170, 70], "into self-reflection");
-  moveNode(option01, [8, 8]);
-  addChildNode(window, option01);
-  option02 = createButtonNode("smith", [170, 70], "craft + update");
-  moveNode(option02, [8, 98]);
-  addChildNode(window, option02);
-  option03 = createButtonNode("quit", [170, 40]);
-  moveNode(option03, [8, 276]);
-  addChildNode(window, option03);
+  embarkButtonId = createButtonNode("delve", [170, 70], "into self-reflection");
+  moveNode(embarkButtonId, [8, 8]);
+  addChildNode(window, embarkButtonId);
+  smithButtonId = createButtonNode("smith", [170, 70], "craft + update");
+  moveNode(smithButtonId, [8, 88]);
+  addChildNode(window, smithButtonId);
+  inventoryButtonId = createButtonNode("sin gems", [170, 70], "abilities");
+  moveNode(inventoryButtonId, [8, 168]);
+  addChildNode(window, inventoryButtonId);
+  exitButton = createButtonNode("quit", [170, 40]);
+  moveNode(exitButton, [8, 276]);
+  addChildNode(window, exitButton);
 }
 
 export function campScene(): void
 {
+  playMusic(Music.Camp);
   if (document.monetization && document.monetization.state === "pending")
   {
     gameState.mirrors[0].owned = false;
@@ -167,23 +191,32 @@ export function campScene(): void
     pushSpriteAndSave(`grass_0${ i % 3 + 1 }`, i * 16, 232);
   }
 
-  if (inputContext.fire === option01)
+  if (inputContext.fire === embarkButtonId)
   {
-    // gameSetup();
-    // setScene(Scenes.Adventure);
     arrangeMissionSelect();
     setScene(Scenes.MissionSelect);
   }
 
-  if (inputContext.fire === option02)
+  if (inputContext.fire === smithButtonId)
   {
     updateSmithScreen();
     setScene(Scenes.Smith);
   }
 
-  if (inputContext.fire === option03)
+  if (inputContext.fire === inventoryButtonId)
+  {
+    setScene(Scenes.Gems);
+  }
+
+  if (inputContext.fire === exitButton)
   {
     setScene(Scenes.MainMenu);
+  }
+
+  if (inputContext.fire === musicButton || inputContext.fire === muteMusic)
+  {
+    toggleVolume();
+    node_enabled[muteMusic] = musicMuted;
   }
 
 }

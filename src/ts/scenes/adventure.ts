@@ -6,8 +6,7 @@ import { FrameMaterial, FrameQuality } from "../mirror";
 import { Scenes, setScene } from "../scene-manager";
 import { combat, combatRootId, prepareCombatScene, setupCombatScene } from "./combat";
 import { createChoiceDialogEvent, createEventChoice, createOutcomeDialogEvent } from "../room-events";
-import { eventSound, zzfxP } from "../zzfx";
-import { playCampMusic, stopAdventureMusic } from "../music";
+import { eventSound, healSound, sacrificeSound, zzfxP } from "../zzfx";
 import { screenCenterX, screenCenterY, screenHeight, screenWidth } from "../screen";
 
 import { GemType } from "../ability";
@@ -562,6 +561,7 @@ export function adventure(now: number, delta: number): void
         {
           player.health = player.maxHealth;
         }
+        zzfxP(healSound);
       }
     }
     else if (inputContext.fire === sacrificeButtonId)
@@ -570,6 +570,7 @@ export function adventure(now: number, delta: number): void
       {
         player.sanity = Math.min(player.maxSanity, player.sanity + 1);
         player.health = Math.max(0, player.health - Math.ceil(player.maxHealth * playerSacrifice));
+        zzfxP(sacrificeSound);
       }
     }
     else if (inputContext.fire === leaveButtonId)
@@ -585,8 +586,6 @@ export function adventure(now: number, delta: number): void
           gameState.currencies.silverFragments += Math.ceil(currencies.silverFragments);
           gameState.currencies.goldFragments += Math.ceil(currencies.goldFragments);
 
-          stopAdventureMusic();
-          playCampMusic();
           setScene(Scenes.Camp);
         });
         const no = createEventChoice("no", () => { });
@@ -603,8 +602,6 @@ export function adventure(now: number, delta: number): void
           gameState.currencies.silverFragments += Math.ceil(currencies.silverFragments * 0.5);
           gameState.currencies.goldFragments += Math.ceil(currencies.goldFragments * 0.5);
 
-          stopAdventureMusic();
-          playCampMusic();
           setScene(Scenes.Camp);
         });
         const no = createEventChoice("no", () => { });
@@ -624,8 +621,6 @@ export function adventure(now: number, delta: number): void
           gameState.currencies.silverFragments += Math.ceil(currencies.silverFragments * 0.3);
           gameState.currencies.goldFragments += Math.ceil(currencies.goldFragments * 0.3);
 
-          stopAdventureMusic();
-          playCampMusic();
           setScene(Scenes.Camp);
         },
         "You have fallen and will return to camp with 30% of what you found.", 1000);
@@ -779,8 +774,6 @@ export function adventure(now: number, delta: number): void
             gameState.currencies.silverFragments += Math.ceil(currencies.silverFragments * 0.3);
             gameState.currencies.goldFragments += Math.ceil(currencies.goldFragments * 0.3);
 
-            stopAdventureMusic();
-            playCampMusic();
             setScene(Scenes.Camp);
           },
           "You have fallen and will return to camp with 30% of what you found.", 1000);

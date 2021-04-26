@@ -1,10 +1,11 @@
 import { AbilityType, Gem, GemType } from "./ability"
+import { Easing, InterpolationData, createInterpolationData, interpolate } from "./interpolate"
 import { FrameMaterial, FrameQuality, Mirror, MirrorQuality, getBaseStatsForMirror, getStatIncreaseForMirror } from "./mirror"
+import { gl_getClear, gl_setClear } from "./gl"
 import { levelUp, zzfxP } from "./zzfx"
 import { loadObject, saveObject } from "./storage"
 
 import { DialogEvent } from "./room-events"
-import { InterpolationData } from "./interpolate"
 import { v2 } from "./v2"
 
 export type Currencies = {
@@ -27,8 +28,8 @@ export const CurrencyKeys: (keyof Currencies)[] = [
 
 export enum Boss
 {
-  Greed = 1,
-  Envy,
+  Envy = 1,
+  Greed,
   Lust,
   Gluttony,
   Sloth,
@@ -238,13 +239,13 @@ export let gameState: GameState = {
   currentEvent: null,
   transition: null,
   flags: {
+    "clear_input": false,
     "clear_3_star": false,
     "clear_5_star": false,
     "clear_7_star": false,
-    "clear_input": false,
-    "tutorial_01": false,
-    "tutorial_02": false,
-    "tutorial_03": false,
+    "tutorial_intro": false,
+    "tutorial_smith": false,
+    "tutorial_dungeon": false,
     "tutorial_04": false,
     "tutorial_05": false,
   }
@@ -377,6 +378,29 @@ export function resetGameState(): void
       "tutorial_05": false,
     }
   };
+};
+
+export let backgroundFade: InterpolationData | null;
+
+export function stepBackGroundFade(now: number): void
+{
+  if (backgroundFade)
+  {
+    const i = interpolate(now, backgroundFade);
+    gl_setClear(Math.floor(i.values[0]), Math.floor(i.values[1]), Math.floor(i.values[2]));
+    if (i.done)
+    {
+      backgroundFade = null;
+    }
+  }
+}
+export function fadeBackgroundTo(targetColour: [number, number, number], duration: number, callback: () => void): void
+{
+  if (!backgroundFade)
+  {
+    const current = gl_getClear();
+    backgroundFade = createInterpolationData(duration, current, targetColour, Easing.Linear, callback);
+  }
 }
 
 export function saveGameState(): void

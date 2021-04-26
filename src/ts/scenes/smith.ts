@@ -1,7 +1,7 @@
 import { FrameQuality, Mirror, MirrorQuality, costForNextLevel, craftCost, frameMatNames, frameMatSprite, getMirrorName, getSpecialText, getSummaryText } from "../mirror";
 import { Scenes, setScene } from "../scene-manager";
 import { addChildNode, createButtonNode, createNode, createSprite, createTextNode, createWindowNode, moveNode, node_enabled, node_interactive, node_size, node_visible, updateTextNode } from "../node";
-import { frameMetalFragment, gameState } from "../gamestate";
+import { backgroundFade, fadeBackgroundTo, frameMetalFragment, gameState } from "../gamestate";
 import { screenCenterX, screenHeight, screenWidth } from "../screen";
 
 import { Align } from "../draw";
@@ -343,8 +343,8 @@ function updateUpgradeLabels(textIds: number[], upgradeFrameButton: number, upgr
 }
 export function updateSmithScreen(): void
 {
-  gl_setClear(100, 32, 32);
-
+  gl_setClear(10, 10, 10);
+  bgState = 0;
   if (gameState.mirrors[1].owned)
   {
     node_enabled[brassBuyRootId] = false;
@@ -414,8 +414,17 @@ export function updateSmithScreen(): void
   }
 }
 
+let bgState = 0;
 export function smith(now: number, delta: number): void
 {
+  if (bgState === 0)
+  {
+    fadeBackgroundTo([172, 32, 32], 2000, () => { bgState = 1; });
+  }
+  else
+  {
+    fadeBackgroundTo([10, 10, 10], 4000, () => { bgState = 0; })
+  }
   const currencies = gameState.currencies;
 
   updateTextNode(sandAmountId, `${ currencies.sand }`, 1, Align.Right);

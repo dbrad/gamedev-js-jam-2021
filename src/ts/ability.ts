@@ -60,6 +60,30 @@ export const AbilityName: { [key in AbilityType]: string } = {
   [AbilityType.Disable]: "Disable",
 } as const;
 
+export const AbilityDescription: { [key in AbilityType]: string } = {
+  [AbilityType.BonusXp]: "Gain bonus experience from combat.",
+  [AbilityType.Copy]: "Copy",
+  [AbilityType.BonusLoot]: "Gain bonus loot while exploring.",
+  [AbilityType.Steal]: "Steal",
+  [AbilityType.Sacrifice]: "Sacrifice health to regain sanity.",
+  [AbilityType.Pacify]: "Pacify",
+  [AbilityType.Heal]: "Heal periodically during combat.",
+  [AbilityType.Reflect]: "Reflect damage back to attacking enemies.",
+  [AbilityType.DoubleStrike]: "Periodically strike an extra time during combat",
+  [AbilityType.RevealMap]: "Chance to reveal rooms at the start of a level.",
+  [AbilityType.Disable]: "Disable",
+} as const;
+
+export const GemName: { [key in GemType]: string } = {
+  [GemType.Emerald]: "Envy's Emerald",
+  [GemType.Citrine]: "Greed's Citrine",
+  [GemType.Morganite]: "Lust's Morganite",
+  [GemType.FireOpal]: "Gluttony's Fire Opal",
+  [GemType.Sapphire]: "Sloth's Sapphire",
+  [GemType.Ruby]: "Wrath's Ruby",
+  [GemType.Alexandrite]: "Pride's Alexandrite"
+} as const;
+
 export const AbilityColour: { [key in AbilityType]: number } = {
   [AbilityType.BonusXp]: 0xFF78c850,
   [AbilityType.Copy]: 0xFF78c850,

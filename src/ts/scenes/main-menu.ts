@@ -1,14 +1,14 @@
+import { Music, playMusic } from "../music";
 import { Scenes, setScene } from "../scene-manager";
 import { addChildNode, createButtonNode, createNode, createTextNode, moveNode, node_enabled, node_position, node_size, node_visible } from "../node";
 import { createChoiceDialogEvent, createEventChoice } from "../room-events";
-import { gameState, loadGameState, resetGameState } from "../gamestate";
+import { fadeBackgroundTo, gameState, loadGameState, resetGameState, wallColour } from "../gamestate";
 import { screenCenterX, screenCenterY, screenHeight, screenWidth } from "../screen";
 
 import { Align } from "../draw";
-import { gl_setClear } from "../gl";
 import { hasObject } from "../storage";
+import { hexToColour } from "../util";
 import { inputContext } from "../input";
-import { playCampMusic } from "../music";
 
 export let mainMenuRootId = -1;
 let mainMenuTitleTextId = -1;
@@ -46,9 +46,20 @@ export function setupMainMenuScene(): void
   options.push(continueGameButtonId);
 }
 
+let colourState = 0;
+let fadeState = 0;
 export function mainMenuScene(now: number, delta: number): void
 {
-  gl_setClear(0, 0, 0);
+  playMusic(Music.Title);
+  if (fadeState === 0)
+  {
+    const colour = hexToColour(wallColour[colourState + 1]);
+    fadeBackgroundTo([colour[3], colour[2], colour[1]], 1000, () => { fadeState = 1; colourState = (colourState + 1) % 7; });
+  }
+  else
+  {
+    fadeBackgroundTo([0, 0, 0], 4000, () => { fadeState = 0; })
+  }
 
   node_enabled[continueGameButtonId] = hasObject("f1");
 
@@ -60,7 +71,6 @@ export function mainMenuScene(now: number, delta: number): void
       {
         resetGameState();
         setScene(Scenes.Camp);
-        playCampMusic();
 
       });
       const no = createEventChoice("no", () => { });
@@ -70,8 +80,6 @@ export function mainMenuScene(now: number, delta: number): void
     {
       resetGameState();
       setScene(Scenes.Camp);
-      playCampMusic();
-
     }
   }
 
@@ -79,6 +87,5 @@ export function mainMenuScene(now: number, delta: number): void
   {
     loadGameState();
     setScene(Scenes.Camp);
-    playCampMusic();
   }
 }

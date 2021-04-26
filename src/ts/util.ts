@@ -7,3 +7,13 @@ export function colourToHex(a: number, b: number, g: number, r: number): number
   out = ((out | (r & 0xff))) >>> 0;
   return out;
 }
+
+export function hexToColour(abgr: number): [number, number, number, number]
+{
+  abgr >>>= 0;
+  const r: number = abgr & 0xFF;
+  const g: number = (abgr & 0xFF00) >>> 8;
+  const b: number = (abgr & 0xFF0000) >>> 16;
+  const a: number = ((abgr & 0xFF000000) >>> 24);
+  return [a, b, g, r];
+}

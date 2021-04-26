@@ -1,13 +1,12 @@
 import { Easing, createInterpolationData } from "./interpolate";
 import { gameState, saveGameState } from "./gamestate";
 
-import { saveObject } from "./storage";
-
 export const enum Scenes
 {
   MainMenu,
   Camp,
   Smith,
+  Gems,
   Adventure,
   MissionSelect,
   MirrorSelect

@@ -167,7 +167,9 @@
         "chest_open",
         "map_bang",
         "map_skull",
-        "map_mirror"
+        "map_mirror",
+        "sound",
+        "cross"
       ],
       "x": 0,
       "y": 56,

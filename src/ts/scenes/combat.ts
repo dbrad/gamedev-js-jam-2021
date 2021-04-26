@@ -3,7 +3,7 @@ import { CurrencyKeys, Enemy, enemyColour, gameState } from "../gamestate";
 import { Easing, InterpolationData, createInterpolationData, interpolate } from "../interpolate";
 import { FrameMaterial, FrameQuality } from "../mirror";
 import { addChildNode, createAbilityBarNode, createCombatBarNode, createNode, createSprite, createTextNode, createWindowNode, moveNode, node_colour, node_enabled, node_size, node_sprite_timestamp, updateAbilityBar, updateCombatBarValues } from "../node";
-import { combatHit, zzfxP } from "../zzfx";
+import { combatHit, healSound, zzfxP } from "../zzfx";
 import { rand, shuffle } from "../random";
 
 export let combatRootId = -1;
@@ -506,9 +506,10 @@ export function combat(now: number, delta: number): boolean
         case AbilityType.Heal:
           if (ability.timer >= AbilityCooldown[ability.abilityType][ability.rank - 1])
           {
-            player.health = Math.min(player.maxHealth, Math.ceil(player.health * 1.05));
+            player.health = Math.min(player.maxHealth, player.health + Math.ceil(player.maxHealth * 0.05));
+            updateCombatBarValues(playerCombatBar, player.health / player.maxHealth, Math.min(1, playerTimer / playerAttackRate));
+            zzfxP(healSound);
             ability.timer = 0;
-            // TODO(dbrad): Heal sound?
           }
           break;
       }
@@ -523,8 +524,9 @@ export function combat(now: number, delta: number): boolean
           case AbilityType.Heal:
             if (combatEnemy)
             {
-              combatEnemy.health = Math.min(combatEnemy.maxHealth, Math.ceil(combatEnemy.health * 1.05));
-              // TODO(dbrad): Heal sound?
+              combatEnemy.health = Math.min(combatEnemy.maxHealth, combatEnemy.health + Math.ceil(combatEnemy.maxHealth * 0.05));
+              updateCombatBarValues(enemyCombatBar, combatEnemy.health / combatEnemy.maxHealth, Math.min(1, enemyTimer / enemyAttackRate));
+              zzfxP(healSound);
             }
             break;
           case AbilityType.Copy:
@@ -607,6 +609,7 @@ export function combat(now: number, delta: number): boolean
     combatRunning = false;
   } else if (player.health <= 0)
   {
+    player.health = 0;
     combatRunning = false;
   }
 

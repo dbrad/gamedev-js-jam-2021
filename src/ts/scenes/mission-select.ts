@@ -1,9 +1,9 @@
+import { Music, playMusic } from "../music";
 import { Scenes, setScene } from "../scene-manager";
 import { addChildNode, createButtonNode, createNode, moveNode, node_enabled, node_size, node_visible } from "../node";
 import { gameState, resetPlayer } from "../gamestate";
 import { generateLevel, setDifficulty } from "../level-gen";
 import { loadPlayerAbilities, resetAdventureScene } from "./adventure";
-import { playadventureMusic, stopCampMusic } from "../music";
 import { screenHeight, screenWidth } from "../screen";
 
 import { arrangeMirrors } from "./mirror-select";
@@ -238,7 +238,7 @@ export function missionSelect(now: number, delta: number): void
     if (gameState.mirrors[3].owned) ownedMirrors++;
     if (gameState.mirrors[4].owned) ownedMirrors++;
 
-    if (ownedMirrors > 0)
+    if (ownedMirrors > 1)
     {
       arrangeMirrors();
       setScene(Scenes.MirrorSelect);
@@ -261,12 +261,11 @@ export function missionSelect(now: number, delta: number): void
       }
       else
       {
-        stopCampMusic();
         generateLevel();
         resetPlayer();
         resetAdventureScene();
         loadPlayerAbilities();
-        playadventureMusic();
+        playMusic(Music.Adventure);
         setScene(Scenes.Adventure);
       }
     }

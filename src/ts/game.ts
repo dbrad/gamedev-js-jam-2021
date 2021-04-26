@@ -3,6 +3,8 @@ import { CurrentScene, Scenes } from "./scene-manager";
 import { adventure, setupAdventureScene } from "./scenes/adventure";
 import { campScene, setupCampScene } from "./scenes/camp";
 import { dialogSystem, dialogSystemRootId, setupDialogScene } from "./scenes/dialog";
+import { gameState, stepBackGroundFade } from "./gamestate";
+import { gemInventory, setupGemInventory } from "./scenes/gem-inventory";
 import { gl_clear, gl_flush, gl_getContext, gl_init, gl_setClear } from "./gl"
 import { initializeInput, inputContext } from "./input";
 import { mainMenuScene, setupMainMenuScene } from "./scenes/main-menu";
@@ -13,7 +15,6 @@ import { screenCenterX, screenCenterY, screenHeight, screenWidth } from "./scree
 import { setupSmithScene, smith } from "./scenes/smith";
 
 import { colourToHex } from "./util";
-import { gameState } from "./gamestate";
 import { getSceneRootId } from "./scene";
 import { interpolate } from "./interpolate";
 import { loadAsset } from "./asset";
@@ -52,6 +53,7 @@ window.addEventListener(`load`, async () =>
     setupMainMenuScene();
     setupCampScene();
     setupSmithScene();
+    setupGemInventory();
     setupMissionSelect();
     setupMirrorSelect();
     setupAdventureScene();
@@ -68,6 +70,8 @@ window.addEventListener(`load`, async () =>
 
     if (playing)
     {
+      stepBackGroundFade(now);
+
       for (let [childId, interpolationData] of node_movement)
       {
         let i = interpolate(now, interpolationData);
@@ -102,6 +106,9 @@ window.addEventListener(`load`, async () =>
           break;
         case Scenes.Smith:
           smith(now, delta);
+          break;
+        case Scenes.Gems:
+          gemInventory(now, delta);
           break;
         case Scenes.Adventure:
           adventure(now, delta);

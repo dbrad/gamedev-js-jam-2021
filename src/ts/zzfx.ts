@@ -28,6 +28,8 @@ export let buttonHover: number[];
 export let combatHit: number[];
 export let levelUp: number[];
 export let eventSound: number[];
+export let healSound: number[];
+export let sacrificeSound: number[];
 export function setupSoundEffects(): void
 {
   zzfxX = new AudioContext();
@@ -35,4 +37,6 @@ export function setupSoundEffects(): void
   combatHit = zzfxG(2.12, .05, 392, 0, 0, .05, 4, 1.79, 1.5, 0, 0, 0, 0, 0, 0, .2, 0, .57, .07, 0); // Hit 74
   levelUp = zzfxG(1.41, .05, 55, .1, .38, .33, 2, .87, 0, 0, 106, .07, .07, 0, 0, 0, .01, .81, .01, .15); // Powerup 112
   eventSound = zzfxG(1.28, 0, 188, .09, .49, .56, 1, 1.84, 0, -8.8, 261, .05, .13, 0, 0, 0, .02, .66, .1, .15); // Powerup 118
+  healSound = zzfxG(1.01, .05, 686, .02, .25, .47, 0, 1.97, -4.4, 0, 230, .08, .1, .2, 0, 0, 0, .53, .03, .31); // Powerup 138
+  sacrificeSound = zzfxG(1.03, .05, 261, 0, .07, .3, 2, .13, 8.3, 0, 0, 0, 0, .6, 0, .3, 0, .85, .03, .14); // Hit 177
 }

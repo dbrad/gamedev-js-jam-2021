@@ -1,9 +1,9 @@
-import { FrameMaterial, Mirror, frameMatSprite, getDescription, getMirrorName } from "../mirror";
+import { FrameMaterial, Mirror, frameMatSprite, getDescription } from "../mirror";
+import { Music, playMusic } from "../music";
 import { Scenes, setScene } from "../scene-manager";
 import { addChildNode, createButtonNode, createNode, createSprite, createTextNode, createWindowNode, moveNode, node_colour, node_enabled, node_interactive, node_size, node_visible, updateTextNode } from "../node";
 import { gameState, resetPlayer } from "../gamestate";
 import { loadPlayerAbilities, resetAdventureScene } from "./adventure";
-import { playadventureMusic, stopCampMusic } from "../music";
 import { screenHeight, screenWidth } from "../screen";
 
 import { Align } from "../draw";
@@ -250,12 +250,11 @@ export function mirrorSelect(now: number, delta: number): void
   if (mirrorSelected)
   {
     mirrorSelected = false;
-    stopCampMusic();
     generateLevel();
     resetPlayer();
     resetAdventureScene();
     loadPlayerAbilities();
-    playadventureMusic();
+    playMusic(Music.Adventure);
     setScene(Scenes.Adventure);
   }
 }
