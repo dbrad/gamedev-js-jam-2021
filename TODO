@@ -1,15 +1,3 @@
-- add tutorial flow
-  - some intro dialog from the smith
-  - hide smith option
-  - only show 1* mission
-  - some helpful text in mission
-    - peek an enemy
-    - peek an event
-    - peek the boss
-  - short text after beating the boss explaining 100/50/30 rule
-  - first time text in smithy
-  - thank you text first time seeing coil mirror
-
 - Save file system
   - Import / Export
 

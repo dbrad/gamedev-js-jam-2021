@@ -33,7 +33,7 @@ export function setupGemInventory(): void
 
   for (let g = 0; g < 7; g++)
   {
-    const rootId = createWindowNode([120, 2 + 50 * g], [400, 40]);
+    const rootId = createWindowNode([95, 2 + 50 * g], [450, 40]);
     addChildNode(gemInventoryRootId, rootId);
 
     const nameId = createTextNode("");

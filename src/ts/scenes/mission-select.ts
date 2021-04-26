@@ -245,29 +245,12 @@ export function missionSelect(now: number, delta: number): void
     }
     else
     {
-      let ownedGems = 0;
-
-      if (gameState.gems[0].owned) ownedGems++;
-      if (gameState.gems[1].owned) ownedGems++;
-      if (gameState.gems[2].owned) ownedGems++;
-      if (gameState.gems[3].owned) ownedGems++;
-      if (gameState.gems[4].owned) ownedGems++;
-      if (gameState.gems[5].owned) ownedGems++;
-      if (gameState.gems[6].owned) ownedGems++;
-
-      if (ownedGems > 0)
-      {
-        // go to gems
-      }
-      else
-      {
-        generateLevel();
-        resetPlayer();
-        resetAdventureScene();
-        loadPlayerAbilities();
-        playMusic(Music.Adventure);
-        setScene(Scenes.Adventure);
-      }
+      generateLevel();
+      resetPlayer();
+      resetAdventureScene();
+      loadPlayerAbilities();
+      playMusic(Music.Adventure);
+      setScene(Scenes.Adventure);
     }
   }
 }

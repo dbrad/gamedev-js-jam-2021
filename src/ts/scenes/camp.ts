@@ -2,14 +2,13 @@ import { Align, pushQuad, pushSpriteAndSave } from "../draw";
 import { Music, musicMuted, playMusic, toggleVolume } from "../music";
 import { Scenes, setScene } from "../scene-manager";
 import { addChildNode, createButtonNode, createNode, createSprite, createTextNode, createWindowNode, moveNode, node_enabled, node_size, node_visible, updateTextNode } from "../node";
+import { createBasicDialogEvent, createOutcomeDialogEvent } from "../room-events";
 import { screenCenterX, screenHeight, screenWidth } from "../screen";
+import { smith, updateSmithScreen } from "./smith";
 
 import { arrangeMissionSelect } from "./mission-select";
-import { createBasicDialogEvent } from "../room-events";
 import { gameState } from "../gamestate";
-import { gl_setClear } from "../gl";
 import { inputContext } from "../input";
-import { updateSmithScreen } from "./smith";
 import { v2 } from "../v2";
 
 export let campRootId = -1;
@@ -172,6 +171,34 @@ export function campScene(): void
   else
   {
     gameState.mirrors[0].owned = false;
+  }
+  if (!gameState.currentEvent && !gameState.flags["tutorial_intro_01"])
+  {
+    gameState.flags["tutorial_intro_01"] = true;
+    gameState.currentEvent = createBasicDialogEvent("Hello there little one. Still have your wits about you, eh?");
+  }
+
+  if (!gameState.currentEvent && !gameState.flags["tutorial_intro_02"])
+  {
+    gameState.flags["tutorial_intro_02"] = true;
+    gameState.currentEvent = createBasicDialogEvent("I suppose you're here for some self-reflection? Take a gaze into your mirror there and see what you can find.");
+  }
+
+  let ownedGems = 0;
+  if (gameState.gems[0].owned) ownedGems++;
+  else if (gameState.gems[1].owned) ownedGems++;
+  else if (gameState.gems[2].owned) ownedGems++;
+  else if (gameState.gems[3].owned) ownedGems++;
+  else if (gameState.gems[4].owned) ownedGems++;
+  else if (gameState.gems[5].owned) ownedGems++;
+  else if (gameState.gems[6].owned) ownedGems++;
+  node_enabled[inventoryButtonId] = (ownedGems > 0);
+
+  node_enabled[smithButtonId] = gameState.flags["smith_reveal"];
+  if (!gameState.currentEvent && !gameState.flags["smith_reveal"] && gameState.currencies.sand > 0)
+  {
+    gameState.flags["smith_reveal"] = true;
+    gameState.currentEvent = createBasicDialogEvent("Come on over the the smithy if you want to create new mirrors, or fix up one you already have.");
   }
 
   updateTextNode(sandAmountId, `${ gameState.currencies.sand }`, 1, Align.Right);

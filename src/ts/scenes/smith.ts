@@ -5,6 +5,7 @@ import { backgroundFade, fadeBackgroundTo, frameMetalFragment, gameState } from 
 import { screenCenterX, screenHeight, screenWidth } from "../screen";
 
 import { Align } from "../draw";
+import { createBasicDialogEvent } from "../room-events";
 import { gl_setClear } from "../gl";
 import { inputContext } from "../input";
 import { v2 } from "../v2";
@@ -426,6 +427,22 @@ export function smith(now: number, delta: number): void
     fadeBackgroundTo([10, 10, 10], 4000, () => { bgState = 0; })
   }
   const currencies = gameState.currencies;
+
+  if (!gameState.currentEvent && !gameState.flags["tutorial_smith_01"])
+  {
+    gameState.flags["tutorial_smith_01"] = true;
+    gameState.currentEvent = createBasicDialogEvent("You can create and upgrade mirrors here with me using the sand, glass, and metals you find during self-reflection.")
+  }
+  else if (!gameState.currentEvent && !gameState.flags["tutorial_smith_02"])
+  {
+    gameState.flags["tutorial_smith_02"] = true;
+    gameState.currentEvent = createBasicDialogEvent("Upgrading the frame will strengthen the unique ability of the mirror, ya see.")
+  }
+  else if (!gameState.currentEvent && !gameState.flags["tutorial_smith_03"])
+  {
+    gameState.flags["tutorial_smith_03"] = true;
+    gameState.currentEvent = createBasicDialogEvent("Where as upgrading the mirror itself will allow you to see a clearer, stronger image of yourself. Allowing you to take on stronger foes.")
+  }
 
   updateTextNode(sandAmountId, `${ currencies.sand }`, 1, Align.Right);
   updateTextNode(glassAmountId, `${ currencies.glassFragments }`, 1, Align.Right);

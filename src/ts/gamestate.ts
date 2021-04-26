@@ -243,11 +243,12 @@ export let gameState: GameState = {
     "clear_3_star": false,
     "clear_5_star": false,
     "clear_7_star": false,
-    "tutorial_intro": false,
-    "tutorial_smith": false,
-    "tutorial_dungeon": false,
-    "tutorial_04": false,
-    "tutorial_05": false,
+    "smith_reveal": false,
+    "tutorial_intro_01": false,
+    "tutorial_intro_02": false,
+    "tutorial_smith_01": false,
+    "tutorial_smith_02": false,
+    "tutorial_smith_03": false,
   }
 }
 
@@ -364,24 +365,27 @@ export function resetGameState(): void
     currentEvent: null,
     transition: null,
     flags: {
+      "clear_input": false,
       "clear_3_star": false,
       "clear_5_star": false,
       "clear_7_star": false,
-      "clear_8_obs": false,
-      "clear_9_obs": false,
-      "clear_10_obs": false,
-      "clear_input": false,
-      "tutorial_01": false,
-      "tutorial_02": false,
-      "tutorial_03": false,
-      "tutorial_04": false,
-      "tutorial_05": false,
+      "smith_reveal": false,
+      "tutorial_intro_01": false,
+      "tutorial_intro_02": false,
+      "tutorial_smith_01": false,
+      "tutorial_smith_02": false,
+      "tutorial_smith_03": false,
     }
   };
 };
 
 export let backgroundFade: InterpolationData | null;
 
+export function cancelFade(): void
+{
+  backgroundFade = null;
+  gl_setClear(0, 0, 0);
+}
 export function stepBackGroundFade(now: number): void
 {
   if (backgroundFade)
