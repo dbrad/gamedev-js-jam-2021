@@ -7,6 +7,7 @@ import { Scenes, setScene } from "../scene-manager";
 import { combat, combatRootId, prepareCombatScene, setupCombatScene } from "./combat";
 import { createChoiceDialogEvent, createEventChoice, createOutcomeDialogEvent } from "../room-events";
 import { eventSound, zzfxP } from "../zzfx";
+import { playCampMusic, stopAdventureMusic } from "../music";
 import { screenCenterX, screenCenterY, screenHeight, screenWidth } from "../screen";
 
 import { GemType } from "../ability";
@@ -584,8 +585,9 @@ export function adventure(now: number, delta: number): void
           gameState.currencies.silverFragments += Math.ceil(currencies.silverFragments);
           gameState.currencies.goldFragments += Math.ceil(currencies.goldFragments);
 
+          stopAdventureMusic();
+          playCampMusic();
           setScene(Scenes.Camp);
-          // game_mode = mode.Exit;
         });
         const no = createEventChoice("no", () => { });
         gameState.currentEvent = createChoiceDialogEvent([yes, no], "Exit the dungeon with all of your findings?", 1000);
@@ -601,8 +603,9 @@ export function adventure(now: number, delta: number): void
           gameState.currencies.silverFragments += Math.ceil(currencies.silverFragments * 0.5);
           gameState.currencies.goldFragments += Math.ceil(currencies.goldFragments * 0.5);
 
+          stopAdventureMusic();
+          playCampMusic();
           setScene(Scenes.Camp);
-          // game_mode = mode.Exit;
         });
         const no = createEventChoice("no", () => { });
         gameState.currentEvent = createChoiceDialogEvent([yes, no], "Retreat from the dungeon and keep 50% of what you've found?", 1000);
@@ -621,6 +624,8 @@ export function adventure(now: number, delta: number): void
           gameState.currencies.silverFragments += Math.ceil(currencies.silverFragments * 0.3);
           gameState.currencies.goldFragments += Math.ceil(currencies.goldFragments * 0.3);
 
+          stopAdventureMusic();
+          playCampMusic();
           setScene(Scenes.Camp);
         },
         "You have fallen and will return to camp with 30% of what you found.", 1000);
@@ -774,6 +779,8 @@ export function adventure(now: number, delta: number): void
             gameState.currencies.silverFragments += Math.ceil(currencies.silverFragments * 0.3);
             gameState.currencies.goldFragments += Math.ceil(currencies.goldFragments * 0.3);
 
+            stopAdventureMusic();
+            playCampMusic();
             setScene(Scenes.Camp);
           },
           "You have fallen and will return to camp with 30% of what you found.", 1000);

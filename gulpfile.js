@@ -131,6 +131,14 @@ function buildPng()
 }
 //#endregion PNG
 
+function copyAudio()
+{
+  return gulp
+    .src(`src/res/*.wav`)
+    .pipe(gulp.dest(`./dist/src/`))
+    .pipe(gulp.dest(`./build/${ env }/www/`));
+}
+
 //#region JSON
 function cleanJson()
 {
@@ -162,6 +170,7 @@ function watch()
 const build = exports.build =
   gulp.series(compileTS,
     gulp.parallel(
+      copyAudio,
       gulp.series(cleanPng, buildPng),
       gulp.series(cleanJson, buildJson, buildHtml),
       gulp.series(preprocessJs, rollupJs),

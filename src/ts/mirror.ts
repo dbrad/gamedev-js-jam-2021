@@ -91,7 +91,7 @@ export function getMirrorName(mirror: Mirror): string
 export const MirrorStatRatings: { [key in FrameMaterial]: MirrorStats } =
 {
   [FrameMaterial.Coil]: {
-    health: StatRating.E,
+    health: StatRating.D,
     sanity: StatRating.C,
     attack: StatRating.E,
     defense: StatRating.E,
@@ -106,20 +106,20 @@ export const MirrorStatRatings: { [key in FrameMaterial]: MirrorStats } =
   },
   [FrameMaterial.Steel]: {
     health: StatRating.C,
-    sanity: StatRating.E,
+    sanity: StatRating.D,
     attack: StatRating.E,
     defense: StatRating.C,
     attackSpeed: StatRating.E
   },
   [FrameMaterial.Silver]: {
-    health: StatRating.E,
+    health: StatRating.D,
     sanity: StatRating.E,
     attack: StatRating.C,
     defense: StatRating.E,
     attackSpeed: StatRating.C
   },
   [FrameMaterial.Gold]: {
-    health: StatRating.E,
+    health: StatRating.D,
     sanity: StatRating.C,
     attack: StatRating.E,
     defense: StatRating.E,
@@ -223,21 +223,21 @@ export function getStatIncreaseForMirror(mirror: Mirror): RawStats
   }
 }
 
-export const craftCost: [number, number] = [100, 20]
+export const craftCost: [number, number] = [100, 10]
 
 export function costForNextLevel(quality: number): number[]
 {
   if (quality === 0)
   {
-    return [300, 50];
+    return [300, 25];
   }
   else if (quality === 1)
   {
-    return [600, 100];
+    return [600, 50];
   }
   else if (quality === 2)
   {
-    return [1200, 200];
+    return [1200, 100];
   }
   return [-1, -1];
 }

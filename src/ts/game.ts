@@ -17,6 +17,7 @@ import { gameState } from "./gamestate";
 import { getSceneRootId } from "./scene";
 import { interpolate } from "./interpolate";
 import { loadAsset } from "./asset";
+import { setupMusic } from "./music";
 import { setupSoundEffects } from "./zzfx";
 import { tickStats } from "./stats";
 import { v2 } from "./v2";
@@ -46,6 +47,7 @@ window.addEventListener(`load`, async () =>
 
     initializeInput(canvas);
 
+    setupMusic();
     setupSoundEffects();
     setupMainMenuScene();
     setupCampScene();
