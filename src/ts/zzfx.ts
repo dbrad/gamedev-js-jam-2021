@@ -22,7 +22,7 @@ let zzfxR = 44100
 
 // zzfxX - the common audio context
 //@ts-ignore
-let zzfxX = new (top.AudioContext || webkitAudioContext);
+let zzfxX;
 
 export let buttonHover: number[];
 export let combatHit: number[];
@@ -30,6 +30,7 @@ export let levelUp: number[];
 export let eventSound: number[];
 export function setupSoundEffects(): void
 {
+  zzfxX = new AudioContext();
   buttonHover = zzfxG(.5, 0, 220, 0, 0, .1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0);
   combatHit = zzfxG(2.12, .05, 392, 0, 0, .05, 4, 1.79, 1.5, 0, 0, 0, 0, 0, 0, .2, 0, .57, .07, 0); // Hit 74
   levelUp = zzfxG(1.41, .05, 55, .1, .38, .33, 2, .87, 0, 0, 106, .07, .07, 0, 0, 0, .01, .81, .01, .15); // Powerup 112
