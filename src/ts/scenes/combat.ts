@@ -445,6 +445,7 @@ export function combat( now: number, delta: number ): boolean
           playerAttacking = false;
 
           // NOTE: Player Double Strike
+          let struck = false;
           for ( const ability of playerActiveAbilities )
           {
             switch ( ability.abilityType )
@@ -454,9 +455,11 @@ export function combat( now: number, delta: number ): boolean
                 {
                   ability.timer = 0;
                   playerTimer = playerAttackRate;
+                  struck = true;
                 }
                 break;
             }
+            if ( struck ) break;
           }
         } );
       } );

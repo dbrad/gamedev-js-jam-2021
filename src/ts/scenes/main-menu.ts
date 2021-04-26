@@ -10,7 +10,7 @@ import { hasObject } from "../storage";
 import { hexToColour } from "../util";
 import { inputContext } from "../input";
 
-const VERSION = `1.0.0-b5`;
+const VERSION = `1.0.0-b6`;
 export let mainMenuRootId = -1;
 let mainMenuTitleTextId = -1;
 let startGameButtonId = -1;
