@@ -1,14 +1,18 @@
 import { Align, pushQuad, pushSpriteAndSave } from "../draw";
 import { Music, musicMuted, playMusic, toggleVolume } from "../music";
 import { Scenes, setScene } from "../scene-manager";
-import { addChildNode, createButtonNode, createNode, createSprite, createTextNode, createWindowNode, moveNode, node_enabled, node_size, node_visible, updateTextNode } from "../node";
-import { createBasicDialogEvent, createOutcomeDialogEvent } from "../room-events";
+import { addChildNode, createNode, moveNode, node_enabled, node_size, node_visible } from "../node";
+import { createTextNode, updateTextNode } from "../nodes/text-node";
 import { screenCenterX, screenHeight, screenWidth } from "../screen";
-import { smith, updateSmithScreen } from "./smith";
 
 import { arrangeMissionSelect } from "./mission-select";
-import { gameState } from "../gamestate";
+import { createBasicDialogEvent } from "../gameplay/room-events";
+import { createButtonNode } from "../nodes/button-node";
+import { createSprite } from "../nodes/sprite-node";
+import { createWindowNode } from "../nodes/window-node";
+import { gameState } from "../gameplay/gamestate";
 import { inputContext } from "../input";
+import { updateSmithScreen } from "./smith";
 import { v2 } from "../v2";
 
 export let campRootId = -1;
@@ -23,6 +27,7 @@ let goldAmountId = -1;
 let embarkButtonId = -1;
 let smithButtonId = -1;
 let inventoryButtonId = -1;
+let achievementsButtonId = -1;
 let exitButton = -1;
 
 let musicButton = -1;
@@ -139,15 +144,23 @@ export function setupCampScene(): void
   const window = createWindowNode([452, 34], [186, 324]);
   addChildNode(campRootId, window);
 
-  embarkButtonId = createButtonNode("delve", [170, 70], "into self-reflection");
+  embarkButtonId = createButtonNode("delve", [170, 55], "into self-reflection");
   moveNode(embarkButtonId, [8, 8]);
   addChildNode(window, embarkButtonId);
-  smithButtonId = createButtonNode("smith", [170, 70], "craft + update");
-  moveNode(smithButtonId, [8, 88]);
+
+  smithButtonId = createButtonNode("smith", [170, 55], "craft + update");
+  moveNode(smithButtonId, [8, 71]);
   addChildNode(window, smithButtonId);
-  inventoryButtonId = createButtonNode("sin gems", [170, 70], "abilities");
-  moveNode(inventoryButtonId, [8, 168]);
+
+  inventoryButtonId = createButtonNode("sin gems", [170, 55], "abilities");
+  moveNode(inventoryButtonId, [8, 134]);
   addChildNode(window, inventoryButtonId);
+
+  achievementsButtonId = createButtonNode("progress", [170, 55], "achievements");
+  node_enabled[achievementsButtonId] = false;
+  moveNode(achievementsButtonId, [8, 197]);
+  addChildNode(window, achievementsButtonId);
+
   exitButton = createButtonNode("quit", [170, 40]);
   moveNode(exitButton, [8, 276]);
   addChildNode(window, exitButton);
@@ -156,6 +169,8 @@ export function setupCampScene(): void
 export function campScene(): void
 {
   playMusic(Music.Camp);
+
+  // Web Monetization
   if (document.monetization && document.monetization.state === "pending")
   {
     gameState.mirrors[0].owned = false;
@@ -172,6 +187,8 @@ export function campScene(): void
   {
     gameState.mirrors[0].owned = false;
   }
+
+  // Tutoirals
   if (!gameState.currentEvent && !gameState.flags["tutorial_intro_01"])
   {
     gameState.flags["tutorial_intro_01"] = true;
@@ -184,6 +201,7 @@ export function campScene(): void
     gameState.currentEvent = createBasicDialogEvent("I suppose you're here for some self-reflection? Take a gaze into your mirror there and see what you can find.");
   }
 
+  // Should we show the Gems button?
   let ownedGems = 0;
   if (gameState.gems[0].owned) ownedGems++;
   else if (gameState.gems[1].owned) ownedGems++;
@@ -194,6 +212,7 @@ export function campScene(): void
   else if (gameState.gems[6].owned) ownedGems++;
   node_enabled[inventoryButtonId] = (ownedGems > 0);
 
+  // Should we show the Smith button?
   node_enabled[smithButtonId] = gameState.flags["smith_reveal"];
   if (!gameState.currentEvent && !gameState.flags["smith_reveal"] && gameState.currencies.sand > 0)
   {
@@ -201,6 +220,7 @@ export function campScene(): void
     gameState.currentEvent = createBasicDialogEvent("Come on over to the smithy if you want to create new mirrors, or fix up one you already have.");
   }
 
+  // Update Currency Labels
   updateTextNode(sandAmountId, `${ gameState.currencies.sand }`, 1, Align.Right);
   updateTextNode(glassAmountId, `${ gameState.currencies.glassFragments }`, 1, Align.Right);
   updateTextNode(brassAmountId, `${ gameState.currencies.brassFragments }`, 1, Align.Right);
@@ -208,6 +228,8 @@ export function campScene(): void
   updateTextNode(silverAmountId, `${ gameState.currencies.silverFragments }`, 1, Align.Right);
   updateTextNode(goldAmountId, `${ gameState.currencies.goldFragments }`, 1, Align.Right);
 
+
+  // Draw the Camp Scene
   pushQuad(0, 0, 640, 120, 0xFF3B2006);
   pushQuad(0, 120, 640, 80, 0xFF3B3006);
   pushQuad(0, 200, 640, 40, 0xFF3B4006);
@@ -218,6 +240,7 @@ export function campScene(): void
     pushSpriteAndSave(`grass_0${ i % 3 + 1 }`, i * 16, 232);
   }
 
+  // Input Handlers
   if (inputContext.fire === embarkButtonId)
   {
     arrangeMissionSelect();
@@ -226,7 +249,7 @@ export function campScene(): void
 
   if (inputContext.fire === smithButtonId)
   {
-    updateSmithScreen();
+    updateSmithScreen(true);
     setScene(Scenes.Smith);
   }
 

@@ -1,13 +1,17 @@
-import { FrameMaterial, Mirror, frameMatSprite, getDescription } from "../mirror";
+import { FrameMaterial, Mirror, frameMatSprite, getDescription } from "../gameplay/mirror";
 import { Music, playMusic } from "../music";
 import { Scenes, setScene } from "../scene-manager";
-import { addChildNode, createButtonNode, createNode, createSprite, createTextNode, createWindowNode, moveNode, node_colour, node_enabled, node_interactive, node_size, node_visible, updateTextNode } from "../node";
-import { gameState, resetPlayer } from "../gamestate";
+import { addChildNode, createNode, moveNode, node_enabled, node_interactive, node_size, node_visible } from "../node";
+import { createSprite, node_sprite_colour } from "../nodes/sprite-node";
+import { createTextNode, updateTextNode } from "../nodes/text-node";
+import { gameState, resetPlayer } from "../gameplay/gamestate";
 import { loadPlayerAbilities, resetAdventureScene } from "./adventure";
 import { screenHeight, screenWidth } from "../screen";
 
 import { Align } from "../draw";
-import { generateLevel } from "../level-gen";
+import { createButtonNode } from "../nodes/button-node";
+import { createWindowNode } from "../nodes/window-node";
+import { generateLevel } from "../gameplay/level-gen";
 import { inputContext } from "../input";
 
 export let mirrorSelectRootId = -1;
@@ -56,7 +60,7 @@ export function setupMirrorSelect(): void
   moveNode(goldMirrorId, [100, 285]);
   addChildNode(mirrorSelectRootId, goldMirrorId);
 
-  backButtonId = createButtonNode("back", [70, 40]);
+  backButtonId = createButtonNode("back", [70, 30]);
   moveNode(backButtonId, [2, 2])
   addChildNode(mirrorSelectRootId, backButtonId);
 }
@@ -108,7 +112,7 @@ export function arrangeMirrors(): void
     y += 70;
 
     const description = getDescription(gameState.mirrors[0]);
-    for (const [i, d] of description.entries()) updateTextNode(coilTextIds[i], d, 1, Align.Left, node_colour[coilTextIds[i]]);
+    for (const [i, d] of description.entries()) updateTextNode(coilTextIds[i], d, 1, Align.Left, node_sprite_colour[coilTextIds[i]]);
   }
   else
   {
@@ -122,7 +126,7 @@ export function arrangeMirrors(): void
     y += 70;
 
     const description = getDescription(gameState.mirrors[1]);
-    for (const [i, d] of description.entries()) updateTextNode(brassTextIds[i], d, 1, Align.Left, node_colour[brassTextIds[i]]);
+    for (const [i, d] of description.entries()) updateTextNode(brassTextIds[i], d, 1, Align.Left, node_sprite_colour[brassTextIds[i]]);
 
   }
   else
@@ -137,7 +141,7 @@ export function arrangeMirrors(): void
     y += 70;
 
     const description = getDescription(gameState.mirrors[2]);
-    for (const [i, d] of description.entries()) updateTextNode(steelTextIds[i], d, 1, Align.Left, node_colour[steelTextIds[i]]);
+    for (const [i, d] of description.entries()) updateTextNode(steelTextIds[i], d, 1, Align.Left, node_sprite_colour[steelTextIds[i]]);
   }
   else
   {
@@ -151,7 +155,7 @@ export function arrangeMirrors(): void
     y += 70;
 
     const description = getDescription(gameState.mirrors[3]);
-    for (const [i, d] of description.entries()) updateTextNode(silverTextIds[i], d, 1, Align.Left, node_colour[silverTextIds[i]]);
+    for (const [i, d] of description.entries()) updateTextNode(silverTextIds[i], d, 1, Align.Left, node_sprite_colour[silverTextIds[i]]);
   }
   else
   {
@@ -165,7 +169,7 @@ export function arrangeMirrors(): void
     y += 70;
 
     const description = getDescription(gameState.mirrors[4]);
-    for (const [i, d] of description.entries()) updateTextNode(goldTextIds[i], d, 1, Align.Left, node_colour[goldTextIds[i]]);
+    for (const [i, d] of description.entries()) updateTextNode(goldTextIds[i], d, 1, Align.Left, node_sprite_colour[goldTextIds[i]]);
   }
   else
   {
@@ -182,42 +186,42 @@ export function mirrorSelect(now: number, delta: number): void
 
   if (inputContext.hot === coilMirrorId)
   {
-    node_colour[coilMirrorId] = 0xFF2d2d2d;
+    node_sprite_colour[coilMirrorId] = 0xFF2d2d2d;
   } else
   {
-    node_colour[coilMirrorId] = 0xFF000000;
+    node_sprite_colour[coilMirrorId] = 0xFF000000;
   }
 
   if (inputContext.hot === brassMirrorId)
   {
-    node_colour[brassMirrorId] = 0xFF2d2d2d;
+    node_sprite_colour[brassMirrorId] = 0xFF2d2d2d;
   } else
   {
-    node_colour[brassMirrorId] = 0xFF000000;
+    node_sprite_colour[brassMirrorId] = 0xFF000000;
   }
 
   if (inputContext.hot === steelMirrorId)
   {
-    node_colour[steelMirrorId] = 0xFF2d2d2d;
+    node_sprite_colour[steelMirrorId] = 0xFF2d2d2d;
   } else
   {
-    node_colour[steelMirrorId] = 0xFF000000;
+    node_sprite_colour[steelMirrorId] = 0xFF000000;
   }
 
   if (inputContext.hot === silverMirrorId)
   {
-    node_colour[silverMirrorId] = 0xFF2d2d2d;
+    node_sprite_colour[silverMirrorId] = 0xFF2d2d2d;
   } else
   {
-    node_colour[silverMirrorId] = 0xFF000000;
+    node_sprite_colour[silverMirrorId] = 0xFF000000;
   }
 
   if (inputContext.hot === goldMirrorId)
   {
-    node_colour[goldMirrorId] = 0xFF2d2d2d;
+    node_sprite_colour[goldMirrorId] = 0xFF2d2d2d;
   } else
   {
-    node_colour[goldMirrorId] = 0xFF000000;
+    node_sprite_colour[goldMirrorId] = 0xFF000000;
   }
 
   let mirrorSelected = false;

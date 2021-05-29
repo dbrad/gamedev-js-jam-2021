@@ -1,11 +1,15 @@
-import { FrameQuality, Mirror, MirrorQuality, costForNextLevel, craftCost, frameMatNames, frameMatSprite, getMirrorName, getSpecialText, getSummaryText } from "../mirror";
+import { FrameQuality, Mirror, MirrorQuality, costForNextLevel, craftCost, frameMatNames, frameMatSprite, getMirrorName, getSpecialText, getSummaryText } from "../gameplay/mirror";
 import { Scenes, setScene } from "../scene-manager";
-import { addChildNode, createButtonNode, createNode, createSprite, createTextNode, createWindowNode, moveNode, node_enabled, node_interactive, node_size, node_visible, updateTextNode } from "../node";
-import { backgroundFade, fadeBackgroundTo, frameMetalFragment, gameState } from "../gamestate";
+import { addChildNode, createNode, moveNode, node_enabled, node_interactive, node_size, node_visible } from "../node";
+import { createTextNode, updateTextNode } from "../nodes/text-node";
+import { fadeBackgroundTo, frameMetalFragment, gameState } from "../gameplay/gamestate";
 import { screenCenterX, screenHeight, screenWidth } from "../screen";
 
 import { Align } from "../draw";
-import { createBasicDialogEvent } from "../room-events";
+import { createBasicDialogEvent } from "../gameplay/room-events";
+import { createButtonNode } from "../nodes/button-node";
+import { createSprite } from "../nodes/sprite-node";
+import { createWindowNode } from "../nodes/window-node";
 import { gl_setClear } from "../gl";
 import { inputContext } from "../input";
 import { v2 } from "../v2";
@@ -128,7 +132,7 @@ export function setupSmithScene(): void
   moveNode(smith, [screenCenterX - 40, 20]);
   addChildNode(smithRootId, smith);
 
-  backButtonId = createButtonNode("back", [70, 40]);
+  backButtonId = createButtonNode("back", [70, 30]);
   moveNode(backButtonId, [2, 2])
   addChildNode(smithRootId, backButtonId);
 
@@ -342,10 +346,14 @@ function updateUpgradeLabels(textIds: number[], upgradeFrameButton: number, upgr
     updateTextNode(textIds[4], `${ costForNextLevel(mirror.quality)[1] } glass`, 1, Align.Left, fragColour);
   }
 }
-export function updateSmithScreen(): void
+export function updateSmithScreen(resetBackground: boolean = false): void
 {
-  gl_setClear(10, 10, 10);
-  bgState = 0;
+  if (resetBackground)
+  {
+    gl_setClear(10, 10, 10);
+    bgState = 0;
+  }
+
   if (gameState.mirrors[1].owned)
   {
     node_enabled[brassBuyRootId] = false;

@@ -1,12 +1,12 @@
 import { AbilityType, Gem, GemType } from "./ability"
-import { Easing, InterpolationData, createInterpolationData, interpolate } from "./interpolate"
+import { Easing, InterpolationData, createInterpolationData, interpolate } from "../interpolate"
 import { FrameMaterial, FrameQuality, Mirror, MirrorQuality, getBaseStatsForMirror, getStatIncreaseForMirror } from "./mirror"
-import { gl_getClear, gl_setClear } from "./gl"
-import { levelUp, zzfxP } from "./zzfx"
-import { loadObject, saveObject } from "./storage"
+import { gl_getClear, gl_setClear } from "../gl"
+import { levelUp, zzfxP } from "../zzfx"
+import { loadObject, saveObject } from "../storage"
 
 import { DialogEvent } from "./room-events"
-import { v2 } from "./v2"
+import { v2 } from "../v2"
 
 export type Currencies = {
   sand: number,
@@ -128,129 +128,15 @@ type GameState = {
   flags: { [index: string]: boolean }
 }
 
-export let gameState: GameState = {
-  timestamp: new Date(),
-  player: {
-    level: 1,
-    xp: 0,
-    xpPool: 0,
-    health: 20,
-    maxHealth: 20,
-    sanity: 10,
-    maxSanity: 10,
-    attack: 2,
-    defense: 2,
-    attackSpeed: 100,
-  },
-  equippedMirror: FrameMaterial.Brass,
-  mirrors: {
-    [FrameMaterial.Coil]: {
-      owned: false,
-      material: FrameMaterial.Coil,
-      frameQuality: FrameQuality.Tarnished,
-      quality: MirrorQuality.Shattered
-    },
-    [FrameMaterial.Brass]: {
-      owned: true,
-      material: FrameMaterial.Brass,
-      frameQuality: FrameQuality.Tarnished,
-      quality: MirrorQuality.Shattered
-    },
-    [FrameMaterial.Steel]: {
-      owned: false,
-      material: FrameMaterial.Steel,
-      frameQuality: FrameQuality.Tarnished,
-      quality: MirrorQuality.Shattered
-    },
-    [FrameMaterial.Silver]: {
-      owned: false,
-      material: FrameMaterial.Silver,
-      frameQuality: FrameQuality.Tarnished,
-      quality: MirrorQuality.Shattered
-    },
-    [FrameMaterial.Gold]: {
-      owned: false,
-      material: FrameMaterial.Gold,
-      frameQuality: FrameQuality.Tarnished,
-      quality: MirrorQuality.Shattered
-    }
-  },
-  currencies: {
-    sand: 0,
-    glassFragments: 0,
-    brassFragments: 0,
-    steelFragments: 0,
-    silverFragments: 0,
-    goldFragments: 0,
-  },
-  gems: {
-    [GemType.Emerald]: {
-      type: GemType.Emerald,
-      colour: 0xFF00FF00,
-      owned: false,
-      level: 1,
-      abilitiyType: AbilityType.BonusXp
-    },
-    [GemType.Citrine]: {
-      type: GemType.Citrine,
-      colour: 0xFF00FFFF,
-      owned: false,
-      level: 1,
-      abilitiyType: AbilityType.BonusLoot
-    },
-    [GemType.Morganite]: {
-      type: GemType.Morganite,
-      colour: 0xFF0000FF,
-      owned: false,
-      level: 1,
-      abilitiyType: AbilityType.Sacrifice
-    },
-    [GemType.FireOpal]: {
-      type: GemType.FireOpal,
-      colour: 0xFF00FF00,
-      owned: false,
-      level: 1,
-      abilitiyType: AbilityType.Heal
-    },
-    [GemType.Sapphire]: {
-      type: GemType.Sapphire,
-      colour: 0xFF00FF00,
-      owned: false,
-      level: 1,
-      abilitiyType: AbilityType.Reflect
-    },
-    [GemType.Ruby]: {
-      type: GemType.Ruby,
-      colour: 0xFF00FF00,
-      owned: false,
-      level: 1,
-      abilitiyType: AbilityType.DoubleStrike
-    },
-    [GemType.Alexandrite]: {
-      type: GemType.Alexandrite,
-      colour: 0xFFFF00FF,
-      owned: false,
-      level: 1,
-      abilitiyType: AbilityType.RevealMap
-    }
-  },
-  realmDeck: [],
-  currentLevel: nullLevel,
-  currentEvent: null,
-  transition: null,
-  flags: {
-    "clear_input": false,
-    "clear_3_star": false,
-    "clear_5_star": false,
-    "clear_7_star": false,
-    "smith_reveal": false,
-    "tutorial_intro_01": false,
-    "tutorial_intro_02": false,
-    "tutorial_smith_01": false,
-    "tutorial_smith_02": false,
-    "tutorial_smith_03": false,
-  }
+export let VERSION: string;
+
+export async function loadVersion(): Promise<void>
+{
+  const response = await fetch("VERSION");
+  VERSION = await response.text();
 }
+
+export let gameState: GameState;
 
 export function resetGameState(): void
 {
@@ -365,6 +251,17 @@ export function resetGameState(): void
     currentEvent: null,
     transition: null,
     flags: {
+      "achievement_02": false,
+      "achievement_03": false,
+      "achievement_04": false,
+      "achievement_05": false,
+      "achievement_06": false,
+      "achievement_07": false,
+      "achievement_08": false,
+      "achievement_09": false,
+      "achievement_10": false,
+      "achievement_11": false,
+      "achievement_12": false,
       "clear_input": false,
       "clear_3_star": false,
       "clear_5_star": false,

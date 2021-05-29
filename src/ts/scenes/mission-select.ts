@@ -1,12 +1,13 @@
 import { Music, playMusic } from "../music";
 import { Scenes, setScene } from "../scene-manager";
-import { addChildNode, createButtonNode, createNode, moveNode, node_enabled, node_size, node_visible } from "../node";
-import { gameState, resetPlayer } from "../gamestate";
-import { generateLevel, setDifficulty } from "../level-gen";
+import { addChildNode, createNode, moveNode, node_enabled, node_size, node_visible } from "../node";
+import { gameState, resetPlayer } from "../gameplay/gamestate";
+import { generateLevel, setDifficulty } from "../gameplay/level-gen";
 import { loadPlayerAbilities, resetAdventureScene } from "./adventure";
 import { screenHeight, screenWidth } from "../screen";
 
 import { arrangeMirrors } from "./mirror-select";
+import { createButtonNode } from "../nodes/button-node";
 import { gl_setClear } from "../gl";
 import { inputContext } from "../input";
 
@@ -62,7 +63,7 @@ export function setupMissionSelect(): void
   select10StarId = createButtonNode("???", [200, 70], "Threat level: 10");
   addChildNode(missionSelectRootId, select10StarId);
 
-  backButtonId = createButtonNode("back", [70, 40]);
+  backButtonId = createButtonNode("back", [70, 30]);
   moveNode(backButtonId, [2, 2]);
   addChildNode(missionSelectRootId, backButtonId);
 }

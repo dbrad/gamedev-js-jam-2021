@@ -1,5 +1,5 @@
 import { gameState, moneyPerLevel, nextLevel } from "./gamestate";
-import { rand, shuffle } from "./random";
+import { rand, shuffle } from "../random";
 
 export type EventChoice = {
   label: string,

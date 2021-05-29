@@ -1,8 +1,10 @@
 import { Align, pushQuad, pushText } from "../draw";
-import { addChildNode, createButtonNode, createNode, createWindowNode, moveNode, node_enabled, node_size, node_text, node_visible } from "../node";
+import { addChildNode, createNode, moveNode, node_enabled, node_size } from "../node";
+import { createButtonNode, node_button_text_line_1 } from "../nodes/button-node";
 import { screenCenterX, screenCenterY, screenHeight, screenWidth } from "../screen";
 
-import { gameState } from "../gamestate";
+import { createWindowNode } from "../nodes/window-node";
+import { gameState } from "../gameplay/gamestate";
 import { inputContext } from "../input";
 
 export let dialogSystemRootId = -1;
@@ -68,8 +70,8 @@ export function dialogSystem(now: number, delta: number): void
     {
       if (gameState.currentEvent.choices.length > 0)
       {
-        node_text[choiceButton01Id] = gameState.currentEvent.choices[0].label;
-        node_text[choiceButton02Id] = gameState.currentEvent.choices[1].label;
+        node_button_text_line_1[choiceButton01Id] = gameState.currentEvent.choices[0].label;
+        node_button_text_line_1[choiceButton02Id] = gameState.currentEvent.choices[1].label;
         node_enabled[choiceWindowId] = true;
 
         let outcome: (() => void) | null = null;
