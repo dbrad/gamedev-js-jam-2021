@@ -22,6 +22,6 @@ jobs:
         run: yarn build-and-zip
 
       - name: Butler Push
-        run: .\\tools\\butler push dist\\game.zip fanlix/rogue-reflections:html5 --userversion-file VERSION
+        run: .\\tools\\butler push dist\\game.zip fanlix/rogue-reflections:html5 --userversion-file VERSION.txt
         env: 
           BUTLER_API_KEY: ${{ secrets.BUTLER_CREDENTIALS }}

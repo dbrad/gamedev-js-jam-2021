@@ -132,7 +132,7 @@ export let VERSION: string;
 
 export async function loadVersion(): Promise<void>
 {
-  const response = await fetch("VERSION");
+  const response = await fetch("VERSION.txt");
   VERSION = await response.text();
 }
 
