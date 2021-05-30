@@ -142,7 +142,7 @@ function copyAudio()
 function copyVersion()
 {
   return gulp
-    .src(`VERSION`)
+    .src(`VERSION.txt`)
     .pipe(gulp.dest(`./dist/src/`))
     .pipe(gulp.dest(`./build/${ env }/www/`));
 }
