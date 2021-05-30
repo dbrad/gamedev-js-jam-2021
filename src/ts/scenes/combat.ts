@@ -239,7 +239,7 @@ export function prepareCombatScene(enemy: Enemy): void
     case FrameMaterial.Silver:
       playerActiveAbilities.push({
         abilityType: AbilityType.DoubleStrike,
-        rank: gameState.mirrors[gameState.equippedMirror].frameQuality,
+        rank: gameState.mirrors[gameState.equippedMirror].frameQuality + 1,
         timer: 0,
         disabled: false
       });
@@ -295,7 +295,7 @@ export function prepareCombatScene(enemy: Enemy): void
       case GemType.Ruby:
         playerActiveAbilities.push({
           abilityType: AbilityType.DoubleStrike,
-          rank: gameState.mirrors[gameState.equippedMirror].frameQuality,
+          rank: gameState.gems[gem].level,
           timer: 0,
           disabled: false
         });
