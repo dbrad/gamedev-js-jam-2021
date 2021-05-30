@@ -1,9 +1,9 @@
 import { Boss, LootType, Room, fragPerLevel, gameState, moneyPerLevel } from "./gamestate";
 import { createBasicDialogEvent, getRandomChoiceEvent, getRandomOutcomeEvent } from "./room-events";
-import { rand, shuffle } from "./random";
+import { rand, shuffle } from "../random";
 
 import { AbilityType } from "./ability";
-import { assert } from "./debug";
+import { assert } from "../debug";
 
 //#region Level Gen
 const base_room =

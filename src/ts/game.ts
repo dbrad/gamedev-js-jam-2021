@@ -3,7 +3,7 @@ import { CurrentScene, Scenes } from "./scene-manager";
 import { adventure, setupAdventureScene } from "./scenes/adventure";
 import { campScene, setupCampScene } from "./scenes/camp";
 import { dialogSystem, dialogSystemRootId, setupDialogScene } from "./scenes/dialog";
-import { gameState, stepBackGroundFade } from "./gamestate";
+import { gameState, loadVersion, resetGameState, stepBackGroundFade } from "./gameplay/gamestate";
 import { gemInventory, setupGemInventory } from "./scenes/gem-inventory";
 import { gl_clear, gl_flush, gl_getContext, gl_init, gl_setClear } from "./gl"
 import { initializeInput, inputContext } from "./input";
@@ -34,6 +34,7 @@ window.addEventListener(`load`, async () =>
   let context = gl_getContext(canvas);
   gl_init(context);
   await loadAsset("sheet");
+  await loadVersion();
 
   let then: number;
   let delta: number;
@@ -42,6 +43,7 @@ window.addEventListener(`load`, async () =>
   let playing = false;
   let playGame = () =>
   {
+    resetGameState();
     playing = true;
     canvas.removeEventListener("pointerdown", playGame);
     canvas.removeEventListener("touchstart", playGame);

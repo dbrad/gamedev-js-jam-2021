@@ -1,5 +1,5 @@
 import { Easing, createInterpolationData } from "./interpolate";
-import { backgroundFade, cancelFade, gameState, saveGameState } from "./gamestate";
+import { backgroundFade, cancelFade, gameState, saveGameState } from "./gameplay/gamestate";
 
 import { gl_setClear } from "./gl";
 

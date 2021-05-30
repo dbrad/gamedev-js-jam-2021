@@ -10,3 +10,8 @@ declare interface Document
 {
   monetization: Monetization
 }
+
+declare module 'VERSION' {
+  const content: string;
+  export default content;
+}

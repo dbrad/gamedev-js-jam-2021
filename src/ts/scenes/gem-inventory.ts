@@ -1,10 +1,13 @@
-import { AbilityDescription, Gem, GemName, GemType } from "../ability";
+import { AbilityDescription, Gem, GemName, GemType } from "../gameplay/ability";
 import { Scenes, setScene } from "../scene-manager";
-import { addChildNode, createButtonNode, createNode, createTextNode, createWindowNode, moveNode, node_enabled, node_size, node_visible, updateTextNode } from "../node";
+import { addChildNode, createNode, moveNode, node_enabled, node_size, node_visible } from "../node";
+import { createTextNode, updateTextNode } from "../nodes/text-node";
 import { screenHeight, screenWidth } from "../screen";
 
 import { Align } from "../draw";
-import { gameState } from "../gamestate";
+import { createButtonNode } from "../nodes/button-node";
+import { createWindowNode } from "../nodes/window-node";
+import { gameState } from "../gameplay/gamestate";
 import { gl_setClear } from "../gl";
 import { inputContext } from "../input";
 
@@ -27,7 +30,7 @@ export function setupGemInventory(): void
   node_size[gemInventoryRootId][0] = screenWidth;
   node_size[gemInventoryRootId][1] = screenHeight;
 
-  backButtonId = createButtonNode("back", [70, 40]);
+  backButtonId = createButtonNode("back", [70, 30]);
   moveNode(backButtonId, [2, 2])
   addChildNode(gemInventoryRootId, backButtonId);
 

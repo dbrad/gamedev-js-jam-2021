@@ -70,23 +70,23 @@ function preprocessJs()
 let cache;
 function rollupJs()
 {
+  let plugins = [rollupSourcemaps()];
+  if (!devBuild)
+    plugins.push[rollupTerser({
+      compress: {
+        passes: 20
+      },
+      toplevel: true,
+      mangle: {
+        properties: {
+          regex: /^_.*/
+        }
+      }
+    })];
   return rollup.rollup({
     cache,
     input: `./build/${ env }/pre/game.js`,
-    plugins: [
-      rollupSourcemaps(),
-      rollupTerser({
-        compress: {
-          passes: 20
-        },
-        toplevel: true,
-        mangle: {
-          properties: {
-            regex: /^_.*/
-          }
-        }
-      })
-    ]
+    plugins: plugins
   }).then(bundle =>
   {
     cache = bundle.cache;
@@ -139,6 +139,14 @@ function copyAudio()
     .pipe(gulp.dest(`./build/${ env }/www/`));
 }
 
+function copyVersion()
+{
+  return gulp
+    .src(`VERSION`)
+    .pipe(gulp.dest(`./dist/src/`))
+    .pipe(gulp.dest(`./build/${ env }/www/`));
+}
+
 //#region JSON
 function cleanJson()
 {
@@ -162,15 +170,18 @@ function watch()
 {
   gulp.watch([`./src/res/*.png`], gulp.series(cleanPng, buildPng));
   gulp.watch([`./src/res/*.json`], gulp.series(cleanJson, buildJson, buildHtml));
+  gulp.watch([`./src/res/*.wav`], copyAudio);
   gulp.watch([`./src/html/index.html`], gulp.series(cleanJson, buildJson, buildHtml));
   gulp.watch([`./src/css/*.css`], buildCss);
   gulp.watch([`./src/ts/**/*.ts`], gulp.series(compileTS, preprocessJs, rollupJs));
+  gulp.watch([`VERSION`], copyVersion);
 }
 
 const build = exports.build =
   gulp.series(compileTS,
     gulp.parallel(
       copyAudio,
+      copyVersion,
       gulp.series(cleanPng, buildPng),
       gulp.series(cleanJson, buildJson, buildHtml),
       gulp.series(preprocessJs, rollupJs),

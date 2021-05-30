@@ -1,8 +1,35 @@
 - Save file system
   - Import / Export
+  - Multiple Files
 
-CONTENT NOTES
-----------------
-- Obsidian  = No Stamina, Balanced Stats, Threat Level +1
+- Achievement System
+  - Small window node
+  - animated it sliding on screen, pause, off screen
+  - lives in root like the dialog system
+  - Figure out max number on screen?
+  - Or figure out a scrolling control?
+    - Resisting Lust (3*)
+    - Overcoming Sloth (5*)
+    - Fall of Pride (7*)
+    - Feeling Threatened (10*)
+    - Unlock all abilities
+    - Craft 1 Mirror
+    - Craft all mirrors
+    - Fully upgrade 1 mirror
+    - Fully upgrade all mirror
+    - Max out the obsidian mirror
+    - Get a gem to level 4
+    - Get all gems to level 4
+
+- Gem System Improvements
+  - Gems must be equipped prior to level
+    - Remembers last load out
+    - Toggle on and off with tap
+  - Better inventory screen
+    - Show more info (cooldowns? more details? icon?)
+    - Smaller list of the gems + side panel via tap / hover?
+
+- Obsidian Mirror
+  - No Stamina, Balanced Stats, Threat Level +1
   - D => C => B => A for all stats
-  - No Stamina Mechanic when equiped
+  - No Stamina Mechanic when equipped?

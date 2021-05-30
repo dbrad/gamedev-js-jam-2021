@@ -1,16 +1,22 @@
 import { Align, pushQuad, pushSpriteAndSave } from "../draw";
-import { Currencies, LootType, floorColour, gameState, levelUpGem, levelUpPlayer, nextLevel, wallColour } from "../gamestate";
-import { Direction, addChildNode, createButtonNode, createMovementButtonNode, createNode, createTextNode, createWindowNode, createXPBarNode, moveNode, node_children, node_enabled, node_second_text_line, node_size, node_sprite_timestamp, node_text, node_visible, updateTextNode, updateXPBarValues } from "../node";
+import { Direction, createMovementButtonNode } from "../nodes/movement-button-node";
 import { Easing, InterpolationData, createInterpolationData, interpolate } from "../interpolate";
-import { FrameMaterial, FrameQuality } from "../mirror";
+import { FrameMaterial, FrameQuality } from "../gameplay/mirror";
+import { LootType, floorColour, gameState, levelUpGem, levelUpPlayer, nextLevel, wallColour } from "../gameplay/gamestate";
 import { Scenes, setScene } from "../scene-manager";
+import { addChildNode, createNode, moveNode, node_children, node_enabled, node_size, node_visible } from "../node";
 import { combat, combatRootId, prepareCombatScene, setupCombatScene } from "./combat";
-import { createChoiceDialogEvent, createEventChoice, createOutcomeDialogEvent } from "../room-events";
+import { createButtonNode, node_button_text_line_1, node_button_text_line_2 } from "../nodes/button-node";
+import { createChoiceDialogEvent, createEventChoice, createOutcomeDialogEvent } from "../gameplay/room-events";
+import { createTextNode, updateTextNode } from "../nodes/text-node";
+import { createXPBarNode, updateXPBarValues } from "../nodes/xp-bar-node";
 import { eventSound, healSound, sacrificeSound, zzfxP } from "../zzfx";
 import { screenCenterX, screenCenterY, screenHeight, screenWidth } from "../screen";
 
-import { GemType } from "../ability";
+import { GemType } from "../gameplay/ability";
+import { createWindowNode } from "../nodes/window-node";
 import { inputContext } from "../input";
+import { node_sprite_timestamp } from "../nodes/sprite-node";
 import { rand } from "../random";
 import { v2 } from "../v2";
 
@@ -286,7 +292,7 @@ export function loadPlayerAbilities(): void
             break;
         }
         node_enabled[sacrificeButtonId] = true;
-        node_second_text_line[sacrificeButtonId] = `sanity for hp (1<=>${ playerSacrifice * 100 }%)`
+        node_button_text_line_2[sacrificeButtonId] = `sanity for hp (1<=>${ playerSacrifice * 100 }%)`
         break;
       case GemType.Alexandrite:
         let rooms = 1 + ((gameState.gems[gem].level - 1) * 2);
@@ -536,11 +542,11 @@ export function adventure(now: number, delta: number): void
 
   if (playerRoom.exit)
   {
-    node_text[leaveButtonId] = "leave";
+    node_button_text_line_1[leaveButtonId] = "leave";
   }
   else
   {
-    node_text[leaveButtonId] = "retreat";
+    node_button_text_line_1[leaveButtonId] = "retreat";
   }
 
   const sane = player.sanity > 0;
@@ -550,7 +556,7 @@ export function adventure(now: number, delta: number): void
   node_enabled[restButtonId] = restable
   node_enabled[sacrificeButtonId] = bleedable
   node_enabled[sideBar] = false;
-  
+
   if (game_mode === mode.Player)
   {
     node_enabled[sideBar] = true;
